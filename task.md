@@ -1,0 +1,5 @@
+so i have initialized the project, client and server, server needs to be in mongo and nodejs, in frontend we are vite+tailwind. now i want to create 
+a platform whenre a user signs in using privy and then he can trade perps. there will be a rectangular smartphone rize window and in that window  UI will be very similar to tinder where we will show the graph of the asset at top, below it aseet name, 24 hour change in percentage, mark- current price, open interest , and then below it there will be two buttons Buy/long and
+ Sell/short and below them there will be a money selector slider whose lower bound will be one Hype and upper bound will be max amount in  user wallet, below that another slider of margin
+ provided by hyperliquid whose upper and lower bound are needs to be configured accordingly. and if he swipes right after selecting the config we gonna buy it else we ignore it and anothe
+r asset comes. also a page of profile (all in a smartphone size window UI so it looks like market) 
