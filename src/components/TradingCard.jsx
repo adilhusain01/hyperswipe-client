@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useWallets } from '@privy-io/react-auth'
 import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
 import Chart from './Chart'
+import { TradingCardSkeleton } from './LoadingSkeleton'
 import { 
   constructOrderAction, 
   signL1Action, 
@@ -72,38 +73,26 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
     const fetchUserBalance = async () => {
       if (user?.wallet?.address) {
         try {
-          // Fetch both perp and spot balances
-          const [perpState, spotState] = await Promise.all([
-            hyperliquidAPI.getUserState(user.wallet.address),
-            hyperliquidAPI.getSpotBalances(user.wallet.address)
-          ])
+          // Use Hyperliquid perp account balance for trading
+          const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
           
-          console.log('Perp state:', perpState)
-          console.log('Spot state:', spotState)
+          console.log('Perp state for trading:', perpState)
           
-          const perpBalance = parseFloat(perpState?.marginSummary?.accountValue || 0)
-          
-          // Check spot USDC balance
-          let spotUSDCBalance = 0
-          if (spotState?.balances) {
-            const usdcBalance = spotState.balances.find(balance => 
-              balance.coin === 'USDC' || balance.coin === 'USD'
-            )
-            if (usdcBalance) {
-              spotUSDCBalance = parseFloat(usdcBalance.hold || usdcBalance.total || 0)
-            }
-          }
-          
-          const totalBalance = perpBalance + spotUSDCBalance
-          console.log(`Perp: ${perpBalance}, Spot USDC: ${spotUSDCBalance}, Total: ${totalBalance}`)
-          setUserBalance(totalBalance)
+          // Use withdrawable balance for trading (available balance)
+          const availableBalance = parseFloat(perpState?.withdrawable || 0)
+          console.log(`Available balance for trading: ${availableBalance}`)
+          setUserBalance(availableBalance)
         } catch (error) {
           console.error('Failed to fetch user balance:', error)
+          setUserBalance(0)
         }
       }
     }
 
     fetchUserBalance()
+    // Refresh balance every 10 seconds
+    const interval = setInterval(fetchUserBalance, 10000)
+    return () => clearInterval(interval)
   }, [user])
 
   const handleDragEnd = (_, info) => {
@@ -182,17 +171,13 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-white">Loading assets...</div>
-      </div>
-    )
+    return <TradingCardSkeleton />
   }
 
   if (formattedAssets.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-white">No assets available</div>
+      <div className="h-full min-h-[675px] flex items-center justify-center">
+        <h1 className="text-white">No assets available</h1>
       </div>
     )
   }
@@ -206,26 +191,31 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         onDragEnd={handleDragEnd}
-        className="flex-1 bg-gray-700 rounded-2xl m-4 p-6 cursor-grab active:cursor-grabbing min-h-0 overflow-y-auto"
+        className="flex-1 bg-gray-700 rounded-2xl m-4 cursor-grab active:cursor-grabbing min-h-0 overflow-y-auto"
         whileDrag={{ scale: 1.02 }}
       >
         {/* Price Chart */}
-        <div className="h-32 bg-gray-600 rounded-lg mb-4 overflow-hidden">
+        <div className="h-60 bg-gray-600 mb-4 overflow-hidden">
           <Chart asset={currentAsset} className="w-full h-full" />
         </div>
 
         {/* Asset Info */}
-        <div className="space-y-4">
-          <div className="text-center">
+        <div className="space-y-4 pr-6 pl-6 pb-6">
+          <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-white">{currentAsset.name}</h2>
-            <div className={`text-lg font-semibold ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {priceChange >= 0 ? '+' : ''}{priceChange}% (24h)
+            <div
+              className={`text-lg font-semibold ${
+                priceChange >= 0 ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {priceChange >= 0 ? '+' : ''}
+              {priceChange}% (24h)
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="bg-gray-600 p-3 rounded-lg">
-              <div className="text-gray-300">Mark Price</div>
+              <div className="text-gray-300">Market Price</div>
               <div className="text-white font-semibold">{formatPrice(currentAsset.markPrice)}</div>
             </div>
             <div className="bg-gray-600 p-3 rounded-lg">
@@ -272,6 +262,13 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
                 <span>$10 USDC</span>
                 <span>${userBalance.toFixed(2)} USDC</span>
               </div>
+              {userBalance < 10 && (
+                <div className="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg">
+                  <div className="text-yellow-200 text-xs">
+                    ⚠️ Insufficient balance. Transfer USDC from your Arbitrum wallet in the Profile tab.
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Leverage Slider */}
@@ -296,10 +293,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
           </div>
 
           {/* Swipe Instructions */}
-          <div className="text-center text-xs text-gray-400 mt-4">
-            ← Swipe left to skip • Swipe right to trade →
-            <div className="mt-1">Min: $10 USDC</div>
-          </div>
+          {/* <div className="text-center text-xs text-gray-400">
+            <h1>Min: $10 USDC</h1>
+          </div> */}
         </div>
       </motion.div>
     </div>

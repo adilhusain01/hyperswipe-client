@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { useWallets } from '@privy-io/react-auth'
 import { hyperliquidAPI } from '../services/hyperliquid'
+import { walletService, hyperliquidAccountService } from '../services/wallet'
+import { ProfileSkeleton } from './LoadingSkeleton'
 
 const CopyIcon = ({ onClick, copied }) => (
   <button
@@ -20,24 +23,38 @@ const CopyIcon = ({ onClick, copied }) => (
 )
 
 const Profile = ({ user }) => {
+  const { wallets } = useWallets()
   const [userState, setUserState] = useState(null)
   const [spotState, setSpotState] = useState(null)
+  const [walletUSDCBalance, setWalletUSDCBalance] = useState(0)
+  const [perpAccountExists, setPerpAccountExists] = useState(false)
   const [loading, setLoading] = useState(true)
   const [addressCopied, setAddressCopied] = useState(false)
+  const [transferAmount, setTransferAmount] = useState('')
+  const [isTransferring, setIsTransferring] = useState(false)
+  const [transferError, setTransferError] = useState('')
 
   useEffect(() => {
     const fetchUserState = async () => {
       if (user?.wallet?.address) {
         try {
           setLoading(true)
-          const [perpState, spotBalances] = await Promise.all([
+          const [perpState, spotBalances, walletUSDC, perpAccount] = await Promise.all([
             hyperliquidAPI.getUserState(user.wallet.address),
-            hyperliquidAPI.getSpotBalances(user.wallet.address)
+            hyperliquidAPI.getSpotBalances(user.wallet.address),
+            walletService.getUSDCBalance(user.wallet.address),
+            hyperliquidAccountService.checkPerpAccount(user.wallet.address)
           ])
+          
           console.log('Perp state response:', perpState)
           console.log('Spot balances response:', spotBalances)
+          console.log('Wallet USDC balance:', walletUSDC)
+          console.log('Perp account status:', perpAccount)
+          
           setUserState(perpState)
           setSpotState(spotBalances)
+          setWalletUSDCBalance(walletUSDC)
+          setPerpAccountExists(perpAccount.exists)
         } catch (error) {
           console.error('Failed to fetch user state:', error)
         } finally {
@@ -70,12 +87,49 @@ const Profile = ({ user }) => {
     }
   }
 
+  const handleTransferToPerp = async () => {
+    if (!transferAmount || parseFloat(transferAmount) <= 0) {
+      setTransferError('Please enter a valid amount')
+      return
+    }
+
+    if (parseFloat(transferAmount) > walletUSDCBalance) {
+      setTransferError('Insufficient USDC balance')
+      return
+    }
+
+    const wallet = wallets?.[0]
+    if (!wallet) {
+      setTransferError('No wallet connected')
+      return
+    }
+
+    try {
+      setIsTransferring(true)
+      setTransferError('')
+
+      const result = await walletService.transferUSDCToHyperliquid(wallet, parseFloat(transferAmount))
+      
+      if (result.success) {
+        alert(`Successfully transferred ${transferAmount} USDC to Hyperliquid!\nTransaction hash: ${result.hash}`)
+        setTransferAmount('')
+        // Refresh balances
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
+      } else {
+        setTransferError(result.error || 'Transfer failed')
+      }
+    } catch (error) {
+      console.error('Transfer error:', error)
+      setTransferError('Transfer failed: ' + error.message)
+    } finally {
+      setIsTransferring(false)
+    }
+  }
+
   if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-white">Loading profile...</div>
-      </div>
-    )
+    return <ProfileSkeleton />
   }
 
   const marginSummary = userState?.marginSummary || {}
@@ -108,9 +162,66 @@ const Profile = ({ user }) => {
           </div>
         </div>
 
-        {/* Account Summary */}
+        {/* Wallet Balance (Arbitrum One) */}
         <div className="bg-gray-700 rounded-2xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Account Summary</h3>
+          <h3 className="text-lg font-bold text-white mb-4">Arbitrum Wallet Balance</h3>
+          <div className="bg-gray-600 p-4 rounded-lg mb-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-gray-300 text-sm">USDC Balance</div>
+                <div className="text-white text-xl font-semibold">
+                  ${walletUSDCBalance.toFixed(2)} USDC
+                </div>
+              </div>
+              <div className="text-blue-400">
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          
+          {/* Transfer to Perp Account */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-gray-300 text-sm mb-2 block">Transfer to Hyperliquid</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Amount USDC"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  className="flex-1 bg-gray-600 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  disabled={isTransferring}
+                />
+                <button
+                  onClick={handleTransferToPerp}
+                  disabled={isTransferring || !transferAmount}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  {isTransferring ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+              {transferError && (
+                <div className="text-red-400 text-sm mt-2">{transferError}</div>
+              )}
+              <div className="text-gray-400 text-xs mt-2">
+                Min: $10 USDC • Max: ${walletUSDCBalance.toFixed(2)} USDC
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Hyperliquid Account Summary */}
+        <div className="bg-gray-700 rounded-2xl p-6">
+          <h3 className="text-lg font-bold text-white mb-4">
+            Hyperliquid Account
+            {!perpAccountExists && (
+              <span className="ml-2 text-xs bg-yellow-600 text-yellow-100 px-2 py-1 rounded">
+                Not Created
+              </span>
+            )}
+          </h3>
           <div className="grid grid-cols-1 gap-4">
             <div className="bg-gray-600 p-4 rounded-lg">
               <div className="text-gray-300 text-sm">Account Value</div>
@@ -133,27 +244,16 @@ const Profile = ({ user }) => {
               </div>
             </div>
           </div>
+          
+          {!perpAccountExists && (
+            <div className="mt-4 p-3 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg">
+              <div className="text-yellow-200 text-sm">
+                💡 Your Hyperliquid account will be created automatically when you make your first deposit.
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Quick Stats */}
-        {/* <div className="bg-gray-700 rounded-2xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Quick Stats</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="text-center">
-              <div className="text-gray-300">Total Trades</div>
-              <div className="text-white text-xl font-bold">-</div>
-            </div>
-            <div className="text-center">
-              <div className="text-gray-300">Success Rate</div>
-              <div className="text-white text-xl font-bold">-</div>
-            </div>
-          </div>
-          <div className="mt-4 text-center">
-            <div className="text-gray-400 text-sm">
-              📊 Check the Positions tab for detailed trading info
-            </div>
-          </div>
-        </div> */}
       </div>
     </div>
   )

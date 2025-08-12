@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { hyperliquidAPI } from '../services/hyperliquid'
+import { PositionsSkeleton } from './LoadingSkeleton'
 
 const Positions = ({ user }) => {
   const [userState, setUserState] = useState(null)
@@ -56,11 +57,7 @@ const Positions = ({ user }) => {
   }
 
   if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-white">Loading positions...</div>
-      </div>
-    )
+    return <PositionsSkeleton />
   }
 
   const positions = userState?.assetPositions || []

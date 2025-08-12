@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createChart, CrosshairMode, CandlestickSeries, HistogramSeries } from 'lightweight-charts'
 import { hyperliquidAPI } from '../services/hyperliquid'
+import { ChartSkeleton } from './LoadingSkeleton'
 
 const Chart = ({ asset, className = '' }) => {
   const chartContainerRef = useRef()
@@ -9,6 +10,15 @@ const Chart = ({ asset, className = '' }) => {
   const volumeSeries = useRef()
   const [chartData, setChartData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1h')
+
+  const timeframes = [
+    { label: '1H', value: '1h', hours: 24 },
+    { label: '24H', value: '1h', hours: 24 },
+    { label: '1W', value: '4h', hours: 168 },
+    { label: '1M', value: '1d', hours: 720 },
+    { label: '1Y', value: '1w', hours: 8760 }
+  ]
 
   // Fetch real candlestick data from Hyperliquid
   useEffect(() => {
@@ -18,13 +28,14 @@ const Chart = ({ asset, className = '' }) => {
       try {
         setLoading(true)
         
-        // Get 24 hours of 1h candles (24 data points)
+        // Get timeframe data based on selection
+        const timeframeConfig = timeframes.find(t => t.label === selectedTimeframe) || timeframes[0]
         const endTime = Math.floor(Date.now() / 1000)
-        const startTime = endTime - (24 * 60 * 60) // 24 hours ago
+        const startTime = endTime - (timeframeConfig.hours * 60 * 60)
         
         const response = await hyperliquidAPI.getCandlestickData(
           asset.name,
-          '1h',
+          timeframeConfig.value,
           startTime * 1000, // Convert to milliseconds
           endTime * 1000
         )
@@ -114,7 +125,7 @@ const Chart = ({ asset, className = '' }) => {
     }
 
     fetchChartData()
-  }, [asset])
+  }, [asset, selectedTimeframe])
 
   // Initialize TradingView chart
   useEffect(() => {
@@ -219,40 +230,42 @@ const Chart = ({ asset, className = '' }) => {
   }, [chartData])
 
   if (!asset) {
-    return (
-      <div className={`flex items-center justify-center h-full text-gray-400 ${className}`}>
-        📈 Chart
-      </div>
-    )
+    return <ChartSkeleton />
+  }
+
+  if (loading) {
+    return <ChartSkeleton />
   }
 
   return (
     <div className={`relative ${className}`}>
-      {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-lg z-10">
-          <div className="text-gray-300 text-sm">Loading chart...</div>
-        </div>
-      )}
       
       {/* Chart Info Header */}
-      {/* <div className="absolute top-2 left-2 z-20 text-xs text-gray-300 bg-gray-800 bg-opacity-80 rounded p-2">
+      <div className="absolute top-2 left-2 z-20 text-xs text-gray-300 bg-gray-800 bg-opacity-80 rounded p-2">
         <div className="font-semibold">{asset.name}/USD</div>
-        <div className="text-xs opacity-75">1H • 24H</div>
-      </div> */}
-      
-      {/* Price Info */}
-      {/* <div className="absolute top-2 right-2 z-20 text-right text-xs text-gray-300 bg-gray-800 bg-opacity-80 rounded p-2">
-        <div className="font-mono">
-          ${parseFloat(asset.markPrice).toFixed(parseFloat(asset.markPrice) >= 1 ? 2 : 6)}
-        </div>
-        <div className={`text-xs ${parseFloat(asset.dayChange) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {parseFloat(asset.dayChange) >= 0 ? '+' : ''}{parseFloat(asset.dayChange).toFixed(2)}%
-        </div>
-      </div> */}
+        <div className="text-xs opacity-75">{selectedTimeframe}</div>
+      </div>
 
+      {/* Timeframe Selector */}
+      <div className="absolute top-2 right-2 z-20 flex gap-1">
+        {timeframes.map((tf) => (
+          <button
+            key={tf.label}
+            onClick={() => setSelectedTimeframe(tf.label)}
+            className={`px-2 py-1 text-xs rounded transition-colors ${
+              selectedTimeframe === tf.label
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-800 bg-opacity-80 text-gray-300 hover:bg-gray-700'
+            }`}
+          >
+            {tf.label}
+          </button>
+        ))}
+      </div>
+      
       <div 
         ref={chartContainerRef} 
-        className="w-full h-full rounded-lg overflow-hidden"
+        className="w-full h-full rounded-t-lg overflow-hidden"
         style={{ minHeight: '200px' }}
       />
     </div>

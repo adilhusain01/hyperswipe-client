@@ -40,7 +40,7 @@ const App = () => {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="w-full max-w-sm mx-4">
         {/* Mobile-style container */}
-        <div className="bg-gray-800 rounded-3xl shadow-2xl overflow-hidden h-[725px] relative">
+        <div className="rounded-3xl shadow-[10px_10px_20px_0px_rgba(0,0,0,0.5)] overflow-hidden h-[725px] relative">
           {/* Header */}
           <div className="flex justify-between items-center p-3 bg-gray-700">
             {/* Navigation */}
@@ -80,7 +80,7 @@ const App = () => {
               </button>
             </div>
             
-            <h1 className="text-lg font-bold text-white">HyperSwipe</h1>
+            {/* <h1 className="text-lg font-bold text-white">HyperSwipe</h1> */}
             
             <button
               onClick={logout}
