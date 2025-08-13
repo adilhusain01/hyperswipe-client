@@ -89,6 +89,8 @@ export const hyperliquidAPI = {
 
   async getCandlestickData(coin, interval = '1h', startTime, endTime) {
     try {
+      console.log('🕯️ Requesting candlestick data:', { coin, interval, startTime, endTime })
+      
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'candleSnapshot',
         req: {
@@ -98,10 +100,28 @@ export const hyperliquidAPI = {
           endTime
         }
       })
+      
+      console.log('🕯️ Candlestick response:', {
+        status: response.status,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        length: response.data?.length,
+        sample: response.data?.[0]
+      })
+      
+      // If the response is not an array or is empty, return null to trigger fallback
+      if (!Array.isArray(response.data) || response.data.length === 0) {
+        console.log('🕯️ Empty or invalid candlestick data, will use fallback')
+        return null
+      }
+      
       return response.data
     } catch (error) {
-      console.error('Error fetching candlestick data:', error)
-      throw error
+      console.error('Error fetching candlestick data:', error.response?.data || error.message)
+      console.error('Request was:', { coin, interval, startTime, endTime })
+      
+      // Instead of throwing, return null to trigger fallback data
+      return null
     }
   },
 

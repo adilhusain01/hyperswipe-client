@@ -41,27 +41,62 @@ export function orderActionHash(action, vaultAddress = null, nonce) {
 }
 
 export async function signL1Action(wallet, action, vaultAddress = null, nonce) {
-  if (!wallet || !wallet.signMessage) {
+  console.log('🖋️ Signing with wallet:', {
+    walletType: wallet?.walletClientType,
+    hasSignMessage: !!wallet?.signMessage,
+    methods: wallet ? Object.keys(wallet) : []
+  })
+
+  if (!wallet) {
     throw new Error('Wallet not available for signing')
   }
 
   try {
     // Generate the hash
     const hash = orderActionHash(action, vaultAddress, nonce)
+    console.log('🔑 Generated hash for signing:', hash)
     
-    // Sign the hash
-    const signature = await wallet.signMessage({
-      message: { raw: hash }
-    })
+    let signature
+    
+    // Handle different wallet types and signing methods
+    if (wallet.signMessage) {
+      // Try Privy wallet signing format first
+      try {
+        signature = await wallet.signMessage(hash)
+        console.log('✅ Signed with wallet.signMessage(hash)')
+      } catch (error) {
+        console.log('❌ Failed with signMessage(hash), trying raw format...')
+        // Try with raw format
+        signature = await wallet.signMessage({ message: { raw: hash } })
+        console.log('✅ Signed with wallet.signMessage({message: {raw: hash}})')
+      }
+    } else if (wallet.request) {
+      // Fallback for generic wallet signing
+      signature = await wallet.request({
+        method: 'personal_sign',
+        params: [hash, wallet.address]
+      })
+      console.log('✅ Signed with wallet.request personal_sign')
+    } else {
+      throw new Error('Wallet does not support message signing')
+    }
+
+    console.log('🖋️ Raw signature:', signature)
+
+    // Handle signature format
+    let cleanSignature = signature
+    if (signature.startsWith('0x')) {
+      cleanSignature = signature.slice(2)
+    }
 
     return {
-      r: signature.slice(0, 66),
-      s: '0x' + signature.slice(66, 130),
-      v: parseInt(signature.slice(130, 132), 16)
+      r: '0x' + cleanSignature.slice(0, 64),
+      s: '0x' + cleanSignature.slice(64, 128),
+      v: parseInt(cleanSignature.slice(128, 130), 16)
     }
   } catch (error) {
     console.error('Signing error:', error)
-    throw error
+    throw new Error(`Failed to sign transaction: ${error.message}`)
   }
 }
 
