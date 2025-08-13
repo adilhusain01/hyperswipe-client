@@ -12,7 +12,7 @@ const Positions = ({ user }) => {
         try {
           setLoading(true)
           const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
-          console.log('Perp state for positions:', perpState)
+          // console.log('Perp state for positions:', perpState)
           setUserState(perpState)
         } catch (error) {
           console.error('Failed to fetch user positions:', error)

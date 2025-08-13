@@ -5,18 +5,13 @@ const HYPERLIQUID_API_BASE = 'https://api.hyperliquid-testnet.xyz'
 export const hyperliquidAPI = {
   async getMetaAndAssetCtxs() {
     try {
-      console.log('🔍 Fetching asset contexts from testnet...')
-      console.log('🌐 API Endpoint:', `${HYPERLIQUID_API_BASE}/info`)
+    
       
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'metaAndAssetCtxs'
       })
       
-      console.log('📊 Asset Contexts Response:', {
-        universeCount: response.data?.[0]?.universe?.length,
-        assetCtxsCount: response.data?.[1]?.length,
-        firstAsset: response.data?.[1]?.[0]
-      })
+  
       
       return response.data
     } catch (error) {
@@ -31,18 +26,13 @@ export const hyperliquidAPI = {
 
   async getUserState(userAddress) {
     try {
-      console.log('🔍 Fetching user state for:', userAddress)
-      console.log('🌐 API Endpoint:', `${HYPERLIQUID_API_BASE}/info`)
+  
       
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'clearinghouseState',
         user: userAddress
       })
-      
-      console.log('📊 User State Response:', response.data)
-      console.log('💰 Account Value:', response.data?.marginSummary?.accountValue)
-      console.log('💸 Withdrawable:', response.data?.withdrawable)
-      console.log('🏦 Total Raw USD:', response.data?.marginSummary?.totalRawUsd)
+    
       
       return response.data
     } catch (error) {
@@ -89,7 +79,7 @@ export const hyperliquidAPI = {
 
   async getCandlestickData(coin, interval = '1h', startTime, endTime) {
     try {
-      console.log('🕯️ Requesting candlestick data:', { coin, interval, startTime, endTime })
+      
       
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'candleSnapshot',
@@ -101,17 +91,9 @@ export const hyperliquidAPI = {
         }
       })
       
-      console.log('🕯️ Candlestick response:', {
-        status: response.status,
-        dataType: typeof response.data,
-        isArray: Array.isArray(response.data),
-        length: response.data?.length,
-        sample: response.data?.[0]
-      })
       
       // If the response is not an array or is empty, return null to trigger fallback
       if (!Array.isArray(response.data) || response.data.length === 0) {
-        console.log('🕯️ Empty or invalid candlestick data, will use fallback')
         return null
       }
       
@@ -131,6 +113,12 @@ export const hyperliquidAPI = {
       return response.data
     } catch (error) {
       console.error('Error placing order:', error)
+      
+      // Handle rate limiting specifically
+      if (error.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please wait a few seconds before trying again.')
+      }
+      
       throw error
     }
   }

@@ -26,7 +26,7 @@ const CopyIcon = ({ onClick, copied }) => (
 const Profile = ({ user }) => {
   const { wallets } = useWallets()
   const [userState, setUserState] = useState(null)
-  const [spotState, setSpotState] = useState(null)
+  const [, setSpotState] = useState(null)
   const [walletUSDCBalance, setWalletUSDCBalance] = useState(0)
   const [perpAccountExists, setPerpAccountExists] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -47,7 +47,7 @@ const Profile = ({ user }) => {
             hyperliquidAccountService.checkPerpAccount(user.wallet.address)
           ])
           
-          console.log('📊 Profile: Initial data loaded')
+          // console.log('📊 Profile: Initial data loaded')
           
           setUserState(perpState)
           setSpotState(spotBalances)
@@ -66,7 +66,7 @@ const Profile = ({ user }) => {
 
     // Set up real-time user data listener
     const handleUserDataUpdate = (data) => {
-      console.log('👤 Profile: Real-time user data update:', data)
+      // console.log('👤 Profile: Real-time user data update:', data)
       
       if (data.marginSummary) {
         setUserState(prevState => ({

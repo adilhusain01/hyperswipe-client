@@ -120,7 +120,7 @@ export const hyperliquidAccountService = {
   },
 
   // Create Hyperliquid perp account (this might require additional steps)
-  async createPerpAccount(wallet) {
+  async createPerpAccount() {
     try {
       // Note: Account creation on Hyperliquid typically happens automatically
       // when the first deposit is made to the bridge

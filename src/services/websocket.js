@@ -9,7 +9,7 @@ class WebSocketService {
     this.listeners = new Map()
     
     // Server URL - adjust for production
-    this.serverUrl = process.env.NODE_ENV === 'production' 
+    this.serverUrl = import.meta.env.MODE === 'production' 
       ? 'wss://your-server-domain.com' 
       : 'ws://localhost:8080'
   }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useWallets } from '@privy-io/react-auth'
+import { useWallets, usePrivy } from '@privy-io/react-auth'
 import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
 import websocketService from '../services/websocket'
 import Chart from './Chart'
@@ -41,38 +41,28 @@ const formatPrice = (price) => {
 }
 
 const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => {
-  const { wallets } = useWallets()
+  const { wallets, ready: walletsReady } = useWallets()
+  const { signMessage, authenticated, connectWallet } = usePrivy()
   const [formattedAssets, setFormattedAssets] = useState([])
   const [loading, setLoading] = useState(true)
   const [positionSize, setPositionSize] = useState(10)
   const [leverage, setLeverage] = useState(1)
   const [userBalance, setUserBalance] = useState(0)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [lastOrderTime, setLastOrderTime] = useState(0)
   const [priceFlash, setPriceFlash] = useState({}) // Track price changes for flash effects
   const [isDataUpdating, setIsDataUpdating] = useState(false) // Show live indicator
-
-  // Debug TradingCard state at the top
-  console.log('TradingCard: Component state:', {
-    loading,
-    assetsCount: formattedAssets.length,
-    currentAssetIndex,
-    isDataUpdating
-  })
 
   useEffect(() => {
     const fetchInitialAssets = async () => {
       try {
         setLoading(true)
-        console.log('TradingCard: Starting API call...')
         
         const metaAndCtxs = await hyperliquidAPI.getMetaAndAssetCtxs()
-        console.log('📊 Initial asset data loaded:', metaAndCtxs)
         
         const formatted = formatAssetData(metaAndCtxs)
-        console.log('📊 Formatted asset data:', formatted)
         
         setFormattedAssets(formatted)
-        console.log('TradingCard: Assets set, loading should be false now')
       } catch (error) {
         console.error('Failed to fetch initial assets:', error)
         // Create fallback mock data to prevent infinite loading
@@ -102,11 +92,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
             isDelisted: false
           }
         ]
-        console.log('TradingCard: Using fallback data:', mockAssets)
         setFormattedAssets(mockAssets)
       } finally {
         setLoading(false)
-        console.log('TradingCard: Loading set to false')
       }
     }
 
@@ -115,7 +103,6 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
 
     // Set up WebSocket for real-time price updates
     const handlePriceUpdate = (data) => {
-      console.log('💰 Real-time price update:', data)
       
       if (data.mids) {
         // Show data update indicator
@@ -149,7 +136,6 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
                 }))
               }, 1000)
 
-              console.log(`📈 Updating ${asset.name}: ${asset.markPrice} → ${newPrice} (${direction})`)
 
               return {
                 ...asset,
@@ -176,32 +162,15 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         try {
           // Initial balance fetch
           const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
-          console.log('👤 Initial balance loaded:', perpState)
           
           // Check multiple possible balance sources
           const marginSummary = perpState?.marginSummary
           const withdrawable = parseFloat(perpState?.withdrawable || 0)
           const accountValue = parseFloat(marginSummary?.accountValue || 0)
           
-          console.log('💰 Balance sources:', {
-            withdrawable,
-            accountValue,
-            marginSummary,
-            fullResponse: perpState
-          })
-          
-          // Verify we got the expected data format
-          if (perpState && perpState.withdrawable) {
-            console.log('✅ Successfully received withdrawable balance:', perpState.withdrawable)
-          } else {
-            console.log('⚠️ No withdrawable balance found in response')
-          }
-          
           // Use account value if withdrawable is 0 but account value exists
           const availableBalance = withdrawable > 0 ? withdrawable : accountValue
           setUserBalance(availableBalance)
-          
-          console.log('💰 Final balance set to:', availableBalance)
 
           // Subscribe to real-time user data updates
           websocketService.subscribeToUserData(user.wallet.address)
@@ -214,22 +183,12 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
 
     // Set up real-time user data listener
     const handleUserDataUpdate = (data) => {
-      console.log('👤 Real-time user data update:', data)
-      
       if (data.marginSummary) {
         const withdrawable = parseFloat(data.withdrawable || 0)
         const accountValue = parseFloat(data.marginSummary?.accountValue || 0)
         
-        console.log('💰 Real-time balance sources:', {
-          withdrawable,
-          accountValue
-        })
-        
-        // Use account value if withdrawable is 0 but account value exists
         const availableBalance = withdrawable > 0 ? withdrawable : accountValue
         setUserBalance(availableBalance)
-        
-        console.log('💰 Real-time balance updated to:', availableBalance)
       }
     }
 
@@ -257,13 +216,39 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
     const asset = formattedAssets[currentAssetIndex % formattedAssets.length]
     if (!asset || isPlacingOrder) return
 
-    const wallet = wallets?.[0]
-    console.log('💼 Available wallets:', wallets)
-    console.log('💼 Selected wallet:', wallet)
+    // Rate limiting: prevent requests within 3 seconds of last order
+    const now = Date.now()
+    const timeSinceLastOrder = now - lastOrderTime
+    const minDelay = 3000 // 3 seconds
     
-    if (!wallet) {
-      alert('Please connect your wallet to trade')
+    if (timeSinceLastOrder < minDelay) {
+      const waitTime = Math.ceil((minDelay - timeSinceLastOrder) / 1000)
+      alert(`Please wait ${waitTime} seconds before placing another order to avoid rate limits.`)
       return
+    }
+
+    // Check if wallets are ready
+    if (!walletsReady) {
+      alert('Wallets are still loading. Please wait a moment.')
+      return
+    }
+
+    const wallet = wallets?.[0]
+    
+    if (!authenticated) {
+      alert('Please authenticate first')
+      return
+    }
+
+    if (!wallet) {
+      // Try to connect wallet if none available
+      try {
+        await connectWallet()
+        return // Let user try again after connecting
+      } catch {
+        alert('Failed to connect wallet. Please try again.')
+        return
+      }
     }
     
     if (!wallet.address) {
@@ -271,8 +256,10 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
       return
     }
 
+
     try {
       setIsPlacingOrder(true)
+      setLastOrderTime(now) // Record the order attempt time
 
       // Calculate order parameters
       const isBuy = getOrderDirection(direction)
@@ -295,30 +282,82 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
       // Generate nonce
       const nonce = getNonce()
 
-      // Sign the action
-      const signature = await signL1Action(wallet, action, null, nonce)
+      // Get the wallet connector type for better error handling
+      console.log('🔗 Wallet details:', {
+        address: wallet.address,
+        connectorType: wallet.connectorType,
+        walletClientType: wallet.walletClientType,
+        imported: wallet.imported,
+        chainId: wallet.chainId
+      })
+
+      // Sign the action using Privy's signMessage
+      const signature = await signL1Action({ 
+        signMessage, 
+        address: wallet.address,
+        connectorType: wallet.connectorType
+      }, action, null, nonce)
       
       // Construct the request
       const orderRequest = constructOrderRequest(action, signature, nonce)
 
-      console.log('Placing order:', orderRequest)
-
       // Place the order
+      console.log('📤 Sending order request to Hyperliquid:', orderRequest)
       const response = await hyperliquidAPI.placeOrder(orderRequest)
+      console.log('📨 Hyperliquid API response:', response)
       
       if (response.status === 'ok') {
         const orderStatus = response.response?.data?.statuses?.[0]
+        console.log('📊 Order status:', orderStatus)
+        
         if (orderStatus?.error) {
           alert(`Order failed: ${orderStatus.error}`)
         } else {
           alert(`${direction.toUpperCase()} order placed for ${asset.name}!\nSize: $${positionSize.toFixed(2)} USDC\nLeverage: ${leverage}x`)
         }
       } else {
-        alert('Order failed: Unknown error')
+        console.error('❌ Order failed with response:', response)
+        const errorMsg = response.response?.error || response.error || 'Unknown error'
+        alert(`Order failed: ${errorMsg}`)
       }
     } catch (error) {
       console.error('Order placement error:', error)
-      alert(`Order failed: ${error.message}`)
+      
+      // Handle specific wallet connection errors
+      if (error.message && error.message.includes('Wallet connection lost')) {
+        // Give user specific instructions for wallet reconnection
+        const reconnect = window.confirm(
+          'Wallet connection lost. Would you like to reconnect your wallet now?\n\n' +
+          'Click OK to reconnect, or Cancel to try again later.'
+        )
+        
+        if (reconnect) {
+          try {
+            await connectWallet()
+            alert('Wallet reconnected! Please try your trade again.')
+          } catch {
+            alert('Failed to reconnect wallet. Please try logging out and back in.')
+          }
+        }
+      } else if (error.message && error.message.includes('MetaMask/injected wallet signing failed')) {
+        // MetaMask specific error handling
+        alert(
+          'MetaMask signing failed!\n\n' +
+          'Please check:\n' +
+          '• MetaMask is unlocked\n' +
+          '• Connected to the correct network (Arbitrum Sepolia)\n' +
+          '• Try refreshing the page and reconnecting'
+        )
+      } else if (error.message && error.message.includes('Rate limit exceeded')) {
+        // Rate limit specific error handling
+        alert(
+          'Rate limit exceeded!\n\n' +
+          'Hyperliquid has temporary rate limits.\n' +
+          'Please wait 10-15 seconds before trying again.'
+        )
+      } else {
+        alert(`Order failed: ${error.message}`)
+      }
     } finally {
       setIsPlacingOrder(false)
     }
@@ -338,19 +377,6 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
 
   const currentAsset = formattedAssets[currentAssetIndex % formattedAssets.length]
   const priceChange = parseFloat(currentAsset?.dayChange || 0)
-
-  // Debug asset data being passed to Chart
-  console.log('TradingCard: Rendering with data:', {
-    loading,
-    formattedAssetsCount: formattedAssets.length,
-    currentAssetIndex,
-    currentAsset: currentAsset ? {
-      name: currentAsset.name,
-      markPrice: currentAsset.markPrice,
-      hasMarkPrice: !!currentAsset.markPrice
-    } : null,
-    fullCurrentAsset: currentAsset
-  })
 
   return (
     <div className="h-full flex flex-col">

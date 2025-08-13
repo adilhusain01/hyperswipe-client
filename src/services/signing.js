@@ -42,13 +42,55 @@ export function orderActionHash(action, vaultAddress = null, nonce) {
 
 export async function signL1Action(wallet, action, vaultAddress = null, nonce) {
   console.log('🖋️ Signing with wallet:', {
-    walletType: wallet?.walletClientType,
     hasSignMessage: !!wallet?.signMessage,
+    hasAddress: !!wallet?.address,
+    connectorType: wallet?.connectorType,
     methods: wallet ? Object.keys(wallet) : []
   })
 
-  if (!wallet) {
-    throw new Error('Wallet not available for signing')
+  if (!wallet || !wallet.signMessage) {
+    throw new Error('Wallet not available for signing or does not support message signing')
+  }
+
+  // Special handling for different wallet types
+  if (wallet.connectorType === 'embedded') {
+    console.log('🔐 Using embedded wallet signing')
+  } else if (wallet.connectorType === 'injected') {
+    console.log('🦊 Using injected wallet (MetaMask/external) signing')
+    
+    // For injected wallets, we need to use the browser's ethereum provider directly
+    if (typeof window !== 'undefined' && window.ethereum) {
+      console.log('🌐 Found window.ethereum, using direct provider signing')
+      
+      try {
+        // Generate the hash
+        const hash = orderActionHash(action, vaultAddress, nonce)
+        console.log('🔑 Generated hash for injected wallet signing:', hash)
+        
+        // Use the browser's ethereum provider to sign
+        const signature = await window.ethereum.request({
+          method: 'personal_sign',
+          params: [hash, wallet.address]
+        })
+        
+        console.log('🖋️ Raw signature from injected wallet:', signature)
+
+        // Handle signature format for injected wallets
+        let cleanSignature = signature
+        if (signature.startsWith('0x')) {
+          cleanSignature = signature.slice(2)
+        }
+
+        return {
+          r: '0x' + cleanSignature.slice(0, 64),
+          s: '0x' + cleanSignature.slice(64, 128),
+          v: parseInt(cleanSignature.slice(128, 130), 16)
+        }
+      } catch (injectedError) {
+        console.error('Injected wallet signing failed:', injectedError)
+        // Fall through to Privy methods
+      }
+    }
   }
 
   try {
@@ -58,27 +100,52 @@ export async function signL1Action(wallet, action, vaultAddress = null, nonce) {
     
     let signature
     
-    // Handle different wallet types and signing methods
-    if (wallet.signMessage) {
-      // Try Privy wallet signing format first
-      try {
-        signature = await wallet.signMessage(hash)
-        console.log('✅ Signed with wallet.signMessage(hash)')
-      } catch (error) {
-        console.log('❌ Failed with signMessage(hash), trying raw format...')
-        // Try with raw format
-        signature = await wallet.signMessage({ message: { raw: hash } })
-        console.log('✅ Signed with wallet.signMessage({message: {raw: hash}})')
+    // Try Privy's signMessage function first, then wallet client methods
+    try {
+      if (wallet.signMessage) {
+        // Hyperliquid expects signing of raw bytes, not hex string
+        // Convert hex hash to Uint8Array
+        const hashBytes = new Uint8Array(Array.from(hash.slice(2).match(/.{1,2}/g) || [], (byte) => parseInt(byte, 16)))
+        signature = await wallet.signMessage(hashBytes)
+        console.log('✅ Signed with Privy signMessage(hashBytes)')
+      } else {
+        throw new Error('signMessage not available')
       }
-    } else if (wallet.request) {
-      // Fallback for generic wallet signing
-      signature = await wallet.request({
-        method: 'personal_sign',
-        params: [hash, wallet.address]
-      })
-      console.log('✅ Signed with wallet.request personal_sign')
-    } else {
-      throw new Error('Wallet does not support message signing')
+    } catch (error) {
+      console.log('❌ Failed with bytes, trying hex string...')
+      try {
+        if (wallet.signMessage) {
+          // Fallback: try with hex string
+          signature = await wallet.signMessage(hash)
+          console.log('✅ Signed with Privy signMessage(hash)')
+        } else {
+          throw new Error('signMessage not available')
+        }
+      } catch (error2) {
+        console.log('❌ Failed with hex string, trying message object...')
+        try {
+          if (wallet.signMessage) {
+            // Try message object format
+            signature = await wallet.signMessage({ message: hash })
+            console.log('✅ Signed with Privy signMessage({message: hash})')
+          } else {
+            throw new Error('signMessage not available')
+          }
+        } catch (error3) {
+          console.error('All signing methods failed:', { error, error2, error3 })
+          
+          // Check for specific Privy errors
+          if (error3.message && error3.message.includes('No embedded or connected wallet found')) {
+            if (wallet.connectorType === 'injected') {
+              throw new Error('MetaMask/injected wallet signing failed. Please ensure MetaMask is unlocked and connected to the correct network.')
+            } else {
+              throw new Error('Wallet connection lost. Please disconnect and reconnect your wallet, then try again.')
+            }
+          }
+          
+          throw new Error('Unable to sign message with any supported format')
+        }
+      }
     }
 
     console.log('🖋️ Raw signature:', signature)

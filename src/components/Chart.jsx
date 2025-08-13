@@ -12,7 +12,7 @@ const Chart = ({ asset, className = '' }) => {
   const [chartData, setChartData] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedTimeframe, setSelectedTimeframe] = useState('1h')
-  const [currentPrice, setCurrentPrice] = useState(null)
+  const [, setCurrentPrice] = useState(null)
 
   const timeframes = [
     { label: '3m', value: '3m', hours: 8 },
@@ -181,8 +181,8 @@ const Chart = ({ asset, className = '' }) => {
         },
       })
 
-      console.log('Chart created:', chart.current)
-      console.log('Available methods:', Object.keys(chart.current))
+      // console.log('Chart created:', chart.current)
+      // console.log('Available methods:', Object.keys(chart.current))
 
       // Add candlestick series using the correct API
       candleSeries.current = chart.current.addSeries(CandlestickSeries, {
