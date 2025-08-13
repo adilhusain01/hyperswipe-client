@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useWallets, usePrivy } from '@privy-io/react-auth'
 import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
@@ -53,16 +53,26 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
   const [priceFlash, setPriceFlash] = useState({}) // Track price changes for flash effects
   const [isDataUpdating, setIsDataUpdating] = useState(false) // Show live indicator
 
+  // Add refs to prevent multiple API calls
+  const hasInitializedAssets = useRef(false)
+  const lastUserAddress = useRef(null)
+
   useEffect(() => {
     const fetchInitialAssets = async () => {
+      // Prevent multiple calls
+      if (hasInitializedAssets.current) return
+      
       try {
         setLoading(true)
+        console.log('📊 Fetching initial assets from Hyperliquid...')
         
         const metaAndCtxs = await hyperliquidAPI.getMetaAndAssetCtxs()
         
         const formatted = formatAssetData(metaAndCtxs)
         
         setFormattedAssets(formatted)
+        hasInitializedAssets.current = true
+        console.log('✅ Assets loaded successfully:', formatted.slice(0, 3))
       } catch (error) {
         console.error('Failed to fetch initial assets:', error)
         // Create fallback mock data to prevent infinite loading
@@ -159,7 +169,12 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
   useEffect(() => {
     const fetchInitialUserBalance = async () => {
       if (user?.wallet?.address) {
+        // Prevent multiple calls for the same user
+        if (lastUserAddress.current === user.wallet.address) return
+        lastUserAddress.current = user.wallet.address
+        
         try {
+          console.log('💰 Fetching user balance for:', user.wallet.address)
           // Initial balance fetch
           const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
           
@@ -263,10 +278,25 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
 
       // Calculate order parameters
       const isBuy = getOrderDirection(direction)
-      const orderPrice = getOrderPrice(direction, asset.markPrice, true)
+      const rawOrderPrice = getOrderPrice(direction, asset.markPrice, true)
+      const orderPrice = parseFloat(rawOrderPrice).toFixed(6) // Fix precision issues
+      
       // Calculate size based on USDC position size and mark price
       const markPx = parseFloat(asset.markPrice)
-      const orderSize = (positionSize / markPx).toFixed(asset.szDecimals)
+      const rawOrderSize = positionSize / markPx
+      const orderSize = rawOrderSize.toFixed(asset.szDecimals)
+      
+      console.log('📊 Order parameters:', {
+        asset: asset.name,
+        assetIndex: asset.index,
+        direction,
+        isBuy,
+        markPrice: asset.markPrice,
+        orderPrice,
+        positionSize,
+        orderSize,
+        szDecimals: asset.szDecimals
+      })
       
       // Construct the order action
       const action = constructOrderAction(
@@ -291,10 +321,10 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         chainId: wallet.chainId
       })
 
-      // Sign the action using Privy's signMessage
+      // Sign the action using Privy's signMessage (lowercase address as per Hyperliquid docs)
       const signature = await signL1Action({ 
         signMessage, 
-        address: wallet.address,
+        address: wallet.address.toLowerCase(),
         connectorType: wallet.connectorType
       }, action, null, nonce)
       
@@ -302,7 +332,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
       const orderRequest = constructOrderRequest(action, signature, nonce)
 
       // Place the order
-      console.log('📤 Sending order request to Hyperliquid:', orderRequest)
+      console.log('📤 Sending order request to Hyperliquid:', JSON.stringify(orderRequest, null, 2))
       const response = await hyperliquidAPI.placeOrder(orderRequest)
       console.log('📨 Hyperliquid API response:', response)
       
@@ -317,8 +347,22 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         }
       } else {
         console.error('❌ Order failed with response:', response)
-        const errorMsg = response.response?.error || response.error || 'Unknown error'
-        alert(`Order failed: ${errorMsg}`)
+        const errorMsg = response.response || response.error || 'Unknown error'
+        
+        // Check for specific Hyperliquid errors
+        if (typeof errorMsg === 'string' && errorMsg.includes('does not exist')) {
+          alert(
+            'Account Not Found!\n\n' +
+            'Your wallet needs to be registered with Hyperliquid first.\n\n' +
+            'Please:\n' +
+            '1. Visit https://app.hyperliquid.xyz/\n' +
+            '2. Connect your wallet\n' +
+            '3. Complete the account setup\n' +
+            '4. Then return to HyperSwipe to trade'
+          )
+        } else {
+          alert(`Order failed: ${errorMsg}`)
+        }
       }
     } catch (error) {
       console.error('Order placement error:', error)

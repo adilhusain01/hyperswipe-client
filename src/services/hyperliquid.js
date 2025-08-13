@@ -2,10 +2,29 @@ import axios from 'axios'
 
 const HYPERLIQUID_API_BASE = 'https://api.hyperliquid-testnet.xyz'
 
+// Simple rate limiting to prevent 429 errors
+const rateLimiter = {
+  lastRequest: 0,
+  minDelay: 1000, // 1 second between requests
+  
+  async wait() {
+    const now = Date.now()
+    const timeSinceLastRequest = now - this.lastRequest
+    
+    if (timeSinceLastRequest < this.minDelay) {
+      const waitTime = this.minDelay - timeSinceLastRequest
+      console.log(`⏳ Rate limiting: waiting ${waitTime}ms before API call`)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
+    }
+    
+    this.lastRequest = Date.now()
+  }
+}
+
 export const hyperliquidAPI = {
   async getMetaAndAssetCtxs() {
     try {
-    
+      await rateLimiter.wait()
       
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'metaAndAssetCtxs'
@@ -26,7 +45,7 @@ export const hyperliquidAPI = {
 
   async getUserState(userAddress) {
     try {
-  
+      await rateLimiter.wait()
       
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'clearinghouseState',
@@ -79,7 +98,7 @@ export const hyperliquidAPI = {
 
   async getCandlestickData(coin, interval = '1h', startTime, endTime) {
     try {
-      
+      await rateLimiter.wait()
       
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'candleSnapshot',
@@ -109,14 +128,20 @@ export const hyperliquidAPI = {
 
   async placeOrder(orderData) {
     try {
+      await rateLimiter.wait()
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/exchange`, orderData)
       return response.data
     } catch (error) {
       console.error('Error placing order:', error)
+      console.error('📋 Error response data:', error.response?.data)
+      console.error('📋 Error status:', error.response?.status)
       
-      // Handle rate limiting specifically
+      // Handle specific error codes
       if (error.response?.status === 429) {
         throw new Error('Rate limit exceeded. Please wait a few seconds before trying again.')
+      } else if (error.response?.status === 422) {
+        const errorMsg = error.response?.data?.message || error.response?.data || 'Invalid order format'
+        throw new Error(`Order validation failed: ${errorMsg}`)
       }
       
       throw error
