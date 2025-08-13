@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useWallets } from '@privy-io/react-auth'
 import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
+import websocketService from '../services/websocket'
 import Chart from './Chart'
 import { TradingCardSkeleton } from './LoadingSkeleton'
 import { 
@@ -47,41 +48,119 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
   const [leverage, setLeverage] = useState(1)
   const [userBalance, setUserBalance] = useState(0)
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [priceFlash, setPriceFlash] = useState({}) // Track price changes for flash effects
+  const [isDataUpdating, setIsDataUpdating] = useState(false) // Show live indicator
 
   useEffect(() => {
-    const fetchAssets = async () => {
+    const fetchInitialAssets = async () => {
       try {
         setLoading(true)
         const metaAndCtxs = await hyperliquidAPI.getMetaAndAssetCtxs()
-        // console.log('Raw API data:', metaAndCtxs)
+        console.log('📊 Initial asset data loaded')
         const formatted = formatAssetData(metaAndCtxs)
-        // console.log('Formatted assets:', formatted.slice(0, 3)) // Log first 3 assets
         setFormattedAssets(formatted)
       } catch (error) {
-        console.error('Failed to fetch assets:', error)
+        console.error('Failed to fetch initial assets:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchAssets()
-    const interval = setInterval(fetchAssets, 10000) // Refresh every 10 seconds
-    return () => clearInterval(interval)
+    // Load initial data
+    fetchInitialAssets()
+
+    // Set up WebSocket for real-time price updates
+    const handlePriceUpdate = (data) => {
+      console.log('💰 Real-time price update:', data)
+      
+      if (data.mids) {
+        // Show data update indicator
+        setIsDataUpdating(true)
+        setTimeout(() => setIsDataUpdating(false), 1000)
+        
+        setFormattedAssets(prevAssets => {
+          if (prevAssets.length === 0) return prevAssets
+          
+          return prevAssets.map(asset => {
+            const newPrice = data.mids[asset.name]
+            if (newPrice && newPrice !== asset.markPrice) {
+              const oldPrice = parseFloat(asset.markPrice)
+              const currentPrice = parseFloat(newPrice)
+              const dayChange = asset.prevDayPrice && asset.prevDayPrice !== '0' 
+                ? (((currentPrice - parseFloat(asset.prevDayPrice)) / parseFloat(asset.prevDayPrice)) * 100).toFixed(2)
+                : asset.dayChange
+
+              // Trigger price flash animation
+              const direction = currentPrice > oldPrice ? 'up' : 'down'
+              setPriceFlash(prev => ({
+                ...prev,
+                [asset.name]: { direction, timestamp: Date.now() }
+              }))
+              
+              // Clear flash after animation
+              setTimeout(() => {
+                setPriceFlash(prev => ({
+                  ...prev,
+                  [asset.name]: null
+                }))
+              }, 1000)
+
+              console.log(`📈 Updating ${asset.name}: ${asset.markPrice} → ${newPrice} (${direction})`)
+
+              return {
+                ...asset,
+                markPrice: newPrice,
+                dayChange
+              }
+            }
+            return asset
+          })
+        })
+      }
+    }
+
+    websocketService.on('priceUpdate', handlePriceUpdate)
+
+    return () => {
+      websocketService.off('priceUpdate', handlePriceUpdate)
+    }
   }, [])
 
   useEffect(() => {
-    const fetchUserBalance = async () => {
+    const fetchInitialUserBalance = async () => {
       if (user?.wallet?.address) {
         try {
-          // Use Hyperliquid perp account balance for trading
+          // Initial balance fetch
           const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
+          console.log('👤 Initial balance loaded:', perpState)
           
-          console.log('Perp state for trading:', perpState)
+          // Check multiple possible balance sources
+          const marginSummary = perpState?.marginSummary
+          const withdrawable = parseFloat(perpState?.withdrawable || 0)
+          const accountValue = parseFloat(marginSummary?.accountValue || 0)
           
-          // Use withdrawable balance for trading (available balance)
-          const availableBalance = parseFloat(perpState?.withdrawable || 0)
-          console.log(`Available balance for trading: ${availableBalance}`)
+          console.log('💰 Balance sources:', {
+            withdrawable,
+            accountValue,
+            marginSummary,
+            fullResponse: perpState
+          })
+          
+          // Verify we got the expected data format
+          if (perpState && perpState.withdrawable) {
+            console.log('✅ Successfully received withdrawable balance:', perpState.withdrawable)
+          } else {
+            console.log('⚠️ No withdrawable balance found in response')
+          }
+          
+          // Use account value if withdrawable is 0 but account value exists
+          const availableBalance = withdrawable > 0 ? withdrawable : accountValue
           setUserBalance(availableBalance)
+          
+          console.log('💰 Final balance set to:', availableBalance)
+
+          // Subscribe to real-time user data updates
+          websocketService.subscribeToUserData(user.wallet.address)
         } catch (error) {
           console.error('Failed to fetch user balance:', error)
           setUserBalance(0)
@@ -89,10 +168,33 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
       }
     }
 
-    fetchUserBalance()
-    // Refresh balance every 10 seconds
-    const interval = setInterval(fetchUserBalance, 10000)
-    return () => clearInterval(interval)
+    // Set up real-time user data listener
+    const handleUserDataUpdate = (data) => {
+      console.log('👤 Real-time user data update:', data)
+      
+      if (data.marginSummary) {
+        const withdrawable = parseFloat(data.withdrawable || 0)
+        const accountValue = parseFloat(data.marginSummary?.accountValue || 0)
+        
+        console.log('💰 Real-time balance sources:', {
+          withdrawable,
+          accountValue
+        })
+        
+        // Use account value if withdrawable is 0 but account value exists
+        const availableBalance = withdrawable > 0 ? withdrawable : accountValue
+        setUserBalance(availableBalance)
+        
+        console.log('💰 Real-time balance updated to:', availableBalance)
+      }
+    }
+
+    fetchInitialUserBalance()
+    websocketService.on('userDataUpdate', handleUserDataUpdate)
+
+    return () => {
+      websocketService.off('userDataUpdate', handleUserDataUpdate)
+    }
   }, [user])
 
   const handleDragEnd = (_, info) => {
@@ -202,22 +304,71 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         {/* Asset Info */}
         <div className="space-y-4 pr-6 pl-6 pb-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">{currentAsset.name}</h2>
-            <div
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-white">{currentAsset.name}</h2>
+              {/* Live Data Indicator */}
+              {isDataUpdating && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  className="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                  title="Live data updating"
+                />
+              )}
+            </div>
+            <motion.div
+              key={`${currentAsset.name}-change-${priceChange}`}
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 0.3 }}
               className={`text-lg font-semibold ${
                 priceChange >= 0 ? 'text-green-400' : 'text-red-400'
               }`}
             >
               {priceChange >= 0 ? '+' : ''}
               {priceChange}% (24h)
-            </div>
+            </motion.div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="bg-gray-600 p-3 rounded-lg">
+            <motion.div 
+              className="bg-gray-600 p-3 rounded-lg relative overflow-hidden"
+              animate={priceFlash[currentAsset.name] ? {
+                backgroundColor: priceFlash[currentAsset.name]?.direction === 'up' ? '#10b98120' : '#ef444420'
+              } : {
+                backgroundColor: '#4b5563' // gray-600 hex equivalent
+              }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
               <div className="text-gray-300">Market Price</div>
-              <div className="text-white font-semibold">{formatPrice(currentAsset.markPrice)}</div>
-            </div>
+              <motion.div 
+                key={`price-${currentAsset.name}-${currentAsset.markPrice}`}
+                initial={{ scale: 1, x: 0 }}
+                animate={{ 
+                  scale: priceFlash[currentAsset.name] ? [1, 1.02, 1] : 1,
+                  color: priceFlash[currentAsset.name] ? 
+                    (priceFlash[currentAsset.name]?.direction === 'up' ? '#10b981' : '#ef4444') : '#ffffff'
+                }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="text-white font-semibold"
+              >
+                {formatPrice(currentAsset.markPrice)}
+              </motion.div>
+              {/* Price change indicator */}
+              {priceFlash[currentAsset.name] && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  className={`absolute top-1 right-1 text-xs ${
+                    priceFlash[currentAsset.name]?.direction === 'up' ? 'text-green-400' : 'text-red-400'
+                  }`}
+                >
+                  {priceFlash[currentAsset.name]?.direction === 'up' ? '↗' : '↘'}
+                </motion.div>
+              )}
+            </motion.div>
             <div className="bg-gray-600 p-3 rounded-lg">
               <div className="text-gray-300">Open Interest</div>
               <div className="text-white font-semibold">{formatOpenInterest(currentAsset.openInterest)}</div>
@@ -265,7 +416,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
               {userBalance < 10 && (
                 <div className="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg">
                   <div className="text-yellow-200 text-xs">
-                    ⚠️ Insufficient balance. Transfer USDC from your Arbitrum wallet in the Profile tab.
+                    ⚠️ Insufficient Perp balance
                   </div>
                 </div>
               )}

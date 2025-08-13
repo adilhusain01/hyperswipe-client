@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useWallets } from '@privy-io/react-auth'
 import { hyperliquidAPI } from '../services/hyperliquid'
 import { walletService, hyperliquidAccountService } from '../services/wallet'
+import websocketService from '../services/websocket'
 import { ProfileSkeleton } from './LoadingSkeleton'
 
 const CopyIcon = ({ onClick, copied }) => (
@@ -35,7 +36,7 @@ const Profile = ({ user }) => {
   const [transferError, setTransferError] = useState('')
 
   useEffect(() => {
-    const fetchUserState = async () => {
+    const fetchInitialUserState = async () => {
       if (user?.wallet?.address) {
         try {
           setLoading(true)
@@ -46,15 +47,15 @@ const Profile = ({ user }) => {
             hyperliquidAccountService.checkPerpAccount(user.wallet.address)
           ])
           
-          console.log('Perp state response:', perpState)
-          console.log('Spot balances response:', spotBalances)
-          console.log('Wallet USDC balance:', walletUSDC)
-          console.log('Perp account status:', perpAccount)
+          console.log('📊 Profile: Initial data loaded')
           
           setUserState(perpState)
           setSpotState(spotBalances)
           setWalletUSDCBalance(walletUSDC)
           setPerpAccountExists(perpAccount.exists)
+
+          // Subscribe to real-time user data updates
+          websocketService.subscribeToUserData(user.wallet.address)
         } catch (error) {
           console.error('Failed to fetch user state:', error)
         } finally {
@@ -63,7 +64,26 @@ const Profile = ({ user }) => {
       }
     }
 
-    fetchUserState()
+    // Set up real-time user data listener
+    const handleUserDataUpdate = (data) => {
+      console.log('👤 Profile: Real-time user data update:', data)
+      
+      if (data.marginSummary) {
+        setUserState(prevState => ({
+          ...prevState,
+          marginSummary: data.marginSummary,
+          withdrawable: data.withdrawable,
+          assetPositions: data.assetPositions || prevState?.assetPositions
+        }))
+      }
+    }
+
+    fetchInitialUserState()
+    websocketService.on('userDataUpdate', handleUserDataUpdate)
+
+    return () => {
+      websocketService.off('userDataUpdate', handleUserDataUpdate)
+    }
   }, [user])
 
   const copyAddress = async () => {
@@ -162,9 +182,9 @@ const Profile = ({ user }) => {
           </div>
         </div>
 
-        {/* Wallet Balance (Arbitrum One) */}
+        {/* Wallet Balance (Arbitrum Sepolia) */}
         <div className="bg-gray-700 rounded-2xl p-6">
-          <h3 className="text-lg font-bold text-white mb-4">Arbitrum Wallet Balance</h3>
+          <h3 className="text-lg font-bold text-white mb-4">Arbitrum Sepolia Balance</h3>
           <div className="bg-gray-600 p-4 rounded-lg mb-4">
             <div className="flex justify-between items-center">
               <div>
@@ -172,6 +192,11 @@ const Profile = ({ user }) => {
                 <div className="text-white text-xl font-semibold">
                   ${walletUSDCBalance.toFixed(2)} USDC
                 </div>
+                {walletUSDCBalance === 0 && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Using mock USDC for testnet
+                  </div>
+                )}
               </div>
               <div className="text-blue-400">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -237,10 +262,15 @@ const Profile = ({ user }) => {
                 </div>
               </div>
               <div className="bg-gray-600 p-4 rounded-lg">
-                <div className="text-gray-300 text-sm">Withdrawable</div>
+                <div className="text-gray-300 text-sm">Available Balance</div>
                 <div className="text-white font-semibold">
-                  ${parseFloat(userState?.withdrawable || 0).toLocaleString()}
+                  ${parseFloat(userState?.withdrawable || marginSummary?.accountValue || 0).toLocaleString()}
                 </div>
+                {parseFloat(userState?.withdrawable || 0) === 0 && parseFloat(marginSummary?.accountValue || 0) > 0 && (
+                  <div className="text-xs text-yellow-400 mt-1">
+                    Funds in account but may be in positions
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -249,6 +279,14 @@ const Profile = ({ user }) => {
             <div className="mt-4 p-3 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg">
               <div className="text-yellow-200 text-sm">
                 💡 Your Hyperliquid account will be created automatically when you make your first deposit.
+              </div>
+            </div>
+          )}
+          
+          {parseFloat(marginSummary.accountValue || 0) > 0 && walletUSDCBalance === 0 && (
+            <div className="mt-4 p-3 bg-blue-600 bg-opacity-20 border border-blue-600 rounded-lg">
+              <div className="text-blue-200 text-sm">
+                ℹ️ Your main balance (${parseFloat(marginSummary.accountValue || 0).toFixed(2)}) is in your Hyperliquid account, not your Arbitrum wallet. This is normal for testnet usage.
               </div>
             </div>
           )}

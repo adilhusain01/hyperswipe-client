@@ -1,8 +1,8 @@
 import { createPublicClient, createWalletClient, custom, formatUnits, parseUnits } from 'viem'
-import { arbitrum } from 'viem/chains'
+import { arbitrumSepolia } from 'viem/chains'
 
-// USDC contract address on Arbitrum One
-const USDC_CONTRACT = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'
+// USDC contract address on Arbitrum Sepolia (test USDC)
+const USDC_CONTRACT = '0xda71c3f9bd2f9513ac1a38f68e139bb4a475aa9d' // USDC Mock on Arbitrum Sepolia
 
 // ERC20 ABI for USDC operations
 const ERC20_ABI = [
@@ -33,11 +33,11 @@ const ERC20_ABI = [
 ]
 
 export const walletService = {
-  // Get USDC balance on Arbitrum One
+  // Get USDC balance on Arbitrum Sepolia
   async getUSDCBalance(userAddress) {
     try {
       const publicClient = createPublicClient({
-        chain: arbitrum,
+        chain: arbitrumSepolia,
         transport: custom(window.ethereum)
       })
 
@@ -52,6 +52,11 @@ export const walletService = {
       return parseFloat(formatUnits(balance, 6))
     } catch (error) {
       console.error('Error fetching USDC balance:', error)
+      console.log('📄 USDC Contract Address:', USDC_CONTRACT)
+      console.log('🔍 User Address:', userAddress)
+      console.log('⛓️ Network:', 'Arbitrum Sepolia')
+      
+      // Return 0 instead of throwing error to prevent app crashes
       return 0
     }
   },
@@ -60,13 +65,13 @@ export const walletService = {
   async transferUSDCToHyperliquid(wallet, amount) {
     try {
       const walletClient = createWalletClient({
-        chain: arbitrum,
+        chain: arbitrumSepolia,
         transport: custom(window.ethereum),
         account: wallet.address
       })
 
-      // Hyperliquid bridge address on Arbitrum One
-      const HYPERLIQUID_BRIDGE = '0x2Df1c51E09aECF9cacB7bc98cB1742757f163dF7'
+      // Hyperliquid bridge address on Arbitrum Sepolia (testnet)
+      const HYPERLIQUID_BRIDGE = '0x08cfc1B6b2dCF36A1480b99353A354AA8AC56f89' // Hyperliquid testnet bridge
       
       // Convert amount to USDC units (6 decimals)
       const amountInWei = parseUnits(amount.toString(), 6)

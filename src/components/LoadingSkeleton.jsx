@@ -82,7 +82,7 @@ export const ProfileSkeleton = () => (
       
       {/* Wallet Balance skeleton */}
       <div className="bg-gray-700 rounded-2xl p-6">
-        <Skeleton width="140px" height="20px" className="mb-4" />
+        <Skeleton width="160px" height="20px" className="mb-4" />
         <div className="bg-gray-600 p-4 rounded-lg mb-4">
           <div className="flex justify-between items-center">
             <div>
@@ -188,14 +188,17 @@ export const ChartSkeleton = () => (
     {/* Chart info skeleton */}
     <div className="absolute top-2 left-2 z-20 bg-gray-800 bg-opacity-80 rounded p-2">
       <Skeleton width="60px" height="12px" className="mb-1" />
-      <Skeleton width="40px" height="10px" />
+      <Skeleton width="50px" height="10px" />
     </div>
     
-    {/* Timeframe buttons skeleton */}
-    <div className="absolute top-2 right-2 z-20 flex gap-1">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Skeleton key={i} width="24px" height="20px" className="rounded" />
-      ))}
+    {/* Controls skeleton */}
+    <div className="absolute top-2 left-2 z-20 flex flex-col gap-2">
+      <Skeleton width="80px" height="24px" className="rounded" />
+      <div className="flex gap-1">
+        <Skeleton width="24px" height="24px" className="rounded" />
+        <Skeleton width="32px" height="24px" className="rounded" />
+        <Skeleton width="24px" height="24px" className="rounded" />
+      </div>
     </div>
   </div>
 )

@@ -5,26 +5,72 @@ const HYPERLIQUID_API_BASE = 'https://api.hyperliquid-testnet.xyz'
 export const hyperliquidAPI = {
   async getMetaAndAssetCtxs() {
     try {
+      console.log('🔍 Fetching asset contexts from testnet...')
+      console.log('🌐 API Endpoint:', `${HYPERLIQUID_API_BASE}/info`)
+      
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'metaAndAssetCtxs'
       })
+      
+      console.log('📊 Asset Contexts Response:', {
+        universeCount: response.data?.[0]?.universe?.length,
+        assetCtxsCount: response.data?.[1]?.length,
+        firstAsset: response.data?.[1]?.[0]
+      })
+      
       return response.data
     } catch (error) {
       console.error('Error fetching asset contexts:', error)
+      console.error('Request details:', {
+        endpoint: `${HYPERLIQUID_API_BASE}/info`,
+        requestType: 'metaAndAssetCtxs'
+      })
       throw error
     }
   },
 
   async getUserState(userAddress) {
     try {
+      console.log('🔍 Fetching user state for:', userAddress)
+      console.log('🌐 API Endpoint:', `${HYPERLIQUID_API_BASE}/info`)
+      
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'clearinghouseState',
         user: userAddress
       })
+      
+      console.log('📊 User State Response:', response.data)
+      console.log('💰 Account Value:', response.data?.marginSummary?.accountValue)
+      console.log('💸 Withdrawable:', response.data?.withdrawable)
+      console.log('🏦 Total Raw USD:', response.data?.marginSummary?.totalRawUsd)
+      
       return response.data
     } catch (error) {
       console.error('Error fetching user state:', error)
-      throw error
+      console.error('Request details:', {
+        endpoint: `${HYPERLIQUID_API_BASE}/info`,
+        userAddress,
+        requestType: 'clearinghouseState'
+      })
+      
+      // Return empty state instead of throwing to prevent crashes
+      return {
+        assetPositions: [],
+        crossMaintenanceMarginUsed: "0.0",
+        crossMarginSummary: {
+          accountValue: "0.0",
+          totalMarginUsed: "0.0",
+          totalNtlPos: "0.0",
+          totalRawUsd: "0.0"
+        },
+        marginSummary: {
+          accountValue: "0.0",
+          totalMarginUsed: "0.0",
+          totalNtlPos: "0.0",
+          totalRawUsd: "0.0"
+        },
+        withdrawable: "0.0"
+      }
     }
   },
 
