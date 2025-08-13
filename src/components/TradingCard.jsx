@@ -6,13 +6,12 @@ import websocketService from '../services/websocket'
 import Chart from './Chart'
 import { TradingCardSkeleton } from './LoadingSkeleton'
 import { 
+  pythonSigningService,
   constructOrderAction, 
-  signL1Action, 
-  constructOrderRequest, 
   getNonce,
-  getOrderDirection,
-  getOrderPrice
-} from '../services/signing'
+  getOrderDirection
+} from '../services/pythonSigning'
+import { getFormattedOrderPrice } from '../utils/priceUtils'
 
 // Format open interest with appropriate units
 const formatOpenInterest = (openInterest) => {
@@ -52,10 +51,28 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
   const [lastOrderTime, setLastOrderTime] = useState(0)
   const [priceFlash, setPriceFlash] = useState({}) // Track price changes for flash effects
   const [isDataUpdating, setIsDataUpdating] = useState(false) // Show live indicator
+  const [privateKey, setPrivateKey] = useState('')
+  const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false)
+  const [signingServiceAvailable, setSigningServiceAvailable] = useState(false)
 
   // Add refs to prevent multiple API calls
   const hasInitializedAssets = useRef(false)
   const lastUserAddress = useRef(null)
+
+  // Check signing service availability
+  useEffect(() => {
+    const checkSigningService = async () => {
+      try {
+        const available = await pythonSigningService.isServiceAvailable()
+        setSigningServiceAvailable(available)
+        console.log('🐍 Python signing service available:', available)
+      } catch (error) {
+        console.error('❌ Failed to check signing service:', error)
+        setSigningServiceAvailable(false)
+      }
+    }
+    checkSigningService()
+  }, [])
 
   useEffect(() => {
     const fetchInitialAssets = async () => {
@@ -278,8 +295,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
 
       // Calculate order parameters
       const isBuy = getOrderDirection(direction)
-      const rawOrderPrice = getOrderPrice(direction, asset.markPrice, true)
-      const orderPrice = parseFloat(rawOrderPrice).toFixed(6) // Fix precision issues
+      
+      // Use proper Hyperliquid price formatting with asset's szDecimals (post-only during upgrade)
+      const orderPrice = getFormattedOrderPrice(direction, asset.markPrice, asset.szDecimals, 0.05, true)
       
       // Calculate size based on USDC position size and mark price
       const markPx = parseFloat(asset.markPrice)
@@ -298,7 +316,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         szDecimals: asset.szDecimals
       })
       
-      // Construct the order action
+      // Construct the order action (using post-only during network upgrade)
       const action = constructOrderAction(
         asset.index,
         isBuy,
@@ -306,7 +324,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         orderSize,
         false, // reduceOnly
         'limit',
-        'Ioc' // Immediate or cancel for market-like behavior
+        'Alo' // Post-only (Add Liquidity Only) - required after network upgrade
       )
 
       // Generate nonce
@@ -321,15 +339,29 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         chainId: wallet.chainId
       })
 
-      // Sign the action using Privy's signMessage (lowercase address as per Hyperliquid docs)
-      const signature = await signL1Action({ 
-        signMessage, 
-        address: wallet.address.toLowerCase(),
-        connectorType: wallet.connectorType
-      }, action, null, nonce)
-      
-      // Construct the request
-      const orderRequest = constructOrderRequest(action, signature, nonce)
+      // Check if Python signing service is available
+      if (!signingServiceAvailable) {
+        alert('Python signing service is not available. Please ensure it is running on localhost:8081')
+        return
+      }
+
+      // Check if private key is provided
+      if (!privateKey) {
+        setShowPrivateKeyInput(true)
+        return
+      }
+
+      // Sign the order using Python signing service
+      const orderRequest = await pythonSigningService.signOrder({
+        assetIndex: asset.index,
+        isBuy,
+        price: orderPrice,
+        size: orderSize,
+        walletAddress: wallet.address.toLowerCase(),
+        reduceOnly: false,
+        orderType: 'limit',
+        timeInForce: 'Alo' // Post-only orders required after network upgrade
+      }, privateKey)
 
       // Place the order
       console.log('📤 Sending order request to Hyperliquid:', JSON.stringify(orderRequest, null, 2))
@@ -584,6 +616,54 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
           </div> */}
         </div>
       </motion.div>
+
+      {/* Private Key Input Modal */}
+      {showPrivateKeyInput && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Enter Private Key</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              To use the Python signing service, you need to provide your private key.
+              This is processed securely and not stored.
+            </p>
+            <div className="mb-4">
+              <input
+                type="password"
+                value={privateKey}
+                onChange={(e) => setPrivateKey(e.target.value)}
+                placeholder="0x..."
+                className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowPrivateKeyInput(false)}
+                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (privateKey.trim()) {
+                    setShowPrivateKeyInput(false)
+                    // Retry the trade with the provided private key
+                    // This will be called automatically by handleTrade
+                  }
+                }}
+                disabled={!privateKey.trim()}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+              >
+                Continue
+              </button>
+            </div>
+            {!signingServiceAvailable && (
+              <p className="text-red-400 text-sm mt-3">
+                ⚠️ Python signing service not available. Please ensure it's running on localhost:8081
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

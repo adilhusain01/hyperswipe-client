@@ -8,10 +8,10 @@ class WebSocketService {
     this.messageId = 0
     this.listeners = new Map()
     
-    // Server URL - adjust for production
+    // Server URL - unified Python server with WebSocket support
     this.serverUrl = import.meta.env.MODE === 'production' 
-      ? 'wss://your-server-domain.com' 
-      : 'ws://localhost:8080'
+      ? 'wss://your-server-domain.com/ws' 
+      : 'ws://localhost:8081/ws'
   }
 
   connect() {
@@ -89,19 +89,19 @@ class WebSocketService {
         console.log('📱 Server connection confirmed')
         break
 
-      case 'price_update':
+      case 'priceUpdate':
         this.emit('priceUpdate', messageData)
         break
 
-      case 'user_data_update':
+      case 'userDataUpdate':
         this.emit('userDataUpdate', messageData)
         break
 
-      case 'user_events':
+      case 'userEvents':
         this.emit('userEvents', messageData)
         break
 
-      case 'candle_update':
+      case 'candleUpdate':
         this.emit('candleUpdate', messageData)
         break
 
@@ -218,7 +218,7 @@ export const websocketService = new WebSocketService()
 // Auto-connect when imported
 websocketService.connect().catch(error => {
   console.error('❌ Failed to connect to WebSocket server:', error)
-  console.log('💡 Make sure the server is running: cd server && npm run dev')
+  console.log('💡 Make sure the Python server is running: cd signing-service && python -m app.main')
 })
 
 export default websocketService

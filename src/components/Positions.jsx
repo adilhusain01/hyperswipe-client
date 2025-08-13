@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { hyperliquidAPI } from '../services/hyperliquid'
+import { useWallets } from '@privy-io/react-auth'
+import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
 import { PositionsSkeleton } from './LoadingSkeleton'
+import { pythonSigningService } from '../services/pythonSigning'
+import { getFormattedOrderPrice } from '../utils/priceUtils'
+import websocketService from '../services/websocket'
 
 const Positions = ({ user }) => {
+  const { wallets } = useWallets()
   const [userState, setUserState] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [closingPosition, setClosingPosition] = useState(null)
+  const [privateKey, setPrivateKey] = useState('')
+  const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false)
+  const [livePrices, setLivePrices] = useState({})
 
   useEffect(() => {
     const fetchUserState = async () => {
@@ -23,10 +32,55 @@ const Positions = ({ user }) => {
     }
 
     fetchUserState()
-    // Refresh every 10 seconds for live updates
+    
+    // Note: Don't subscribe again if TradingCard is already subscribed
+    // The WebSocket service should share the subscription
+    
+    // Refresh every 10 seconds for live updates (backup)
     const interval = setInterval(fetchUserState, 10000)
     return () => clearInterval(interval)
   }, [user])
+
+  // WebSocket effect for live price updates
+  useEffect(() => {
+    const handlePriceUpdate = (data) => {
+      // Handle price updates from WebSocket - same pattern as TradingCard
+      if (data && data.mids) {
+        setLivePrices(prevPrices => ({
+          ...prevPrices,
+          ...data.mids
+        }))
+      }
+    }
+
+    // Subscribe to price updates using the correct event
+    websocketService.on('priceUpdate', handlePriceUpdate)
+
+    return () => {
+      websocketService.off('priceUpdate', handlePriceUpdate)
+    }
+  }, [])
+
+  // WebSocket effect for real-time user data updates
+  useEffect(() => {
+    const handleUserDataUpdate = (data) => {
+      // Update user state with real-time data
+      if (data) {
+        console.log('👤 Positions: Received user data update:', data)
+        console.log('💰 Positions: New account value:', data.marginSummary?.accountValue)
+        console.log('📋 Positions: Open orders:', data.openOrders?.length || 0)
+        // Update the user state directly with the new data
+        setUserState(data)
+      }
+    }
+
+    // Subscribe to user data updates
+    websocketService.on('userDataUpdate', handleUserDataUpdate)
+
+    return () => {
+      websocketService.off('userDataUpdate', handleUserDataUpdate)
+    }
+  }, [])
 
   const formatPrice = (price) => {
     const value = parseFloat(price || 0)
@@ -56,12 +110,120 @@ const Positions = ({ user }) => {
     return { side: 'CLOSED', color: 'text-gray-400' }
   }
 
+  const getCurrentPrice = (position) => {
+    // Try to get live price from WebSocket, fallback to position mark price
+    const livePrice = livePrices[position.coin]
+    if (livePrice && parseFloat(livePrice) > 0) {
+      return parseFloat(livePrice)
+    }
+    
+    // Fallback to position mark price
+    const markPrice = parseFloat(position.markPrice || 0)
+    if (markPrice > 0) {
+      return markPrice
+    }
+    
+    // Last fallback: return 0 (will show as $0.00)
+    return 0
+  }
+
+  const closePosition = async (position) => {
+    if (!privateKey) {
+      setShowPrivateKeyInput(true)
+      return
+    }
+
+    try {
+      setClosingPosition(position.coin)
+      
+      const wallet = wallets[0]
+      if (!wallet) {
+        alert('No wallet connected')
+        return
+      }
+
+      // Get asset metadata for price formatting
+      const metaAndCtxs = await hyperliquidAPI.getMetaAndAssetCtxs()
+      const assets = formatAssetData(metaAndCtxs)
+      const asset = assets.find(a => a.name === position.coin)
+      if (!asset) {
+        alert('Asset not found')
+        return
+      }
+
+      // Determine close direction (opposite of current position)
+      const positionSize = parseFloat(position.szi)
+      const isLong = positionSize > 0
+      const closeDirection = isLong ? 'sell' : 'buy'
+      const closeSize = Math.abs(positionSize).toString()
+
+      // Get current market price using the same logic as display
+      let currentPrice = getCurrentPrice(position)
+      
+      if (currentPrice <= 0) {
+        // Final fallback: get current price from fresh asset data
+        console.log('No valid price found, fetching fresh market data...')
+        const assetWithPrice = assets.find(a => a.name === position.coin)
+        currentPrice = parseFloat(assetWithPrice?.markPrice || 0)
+        
+        if (currentPrice <= 0) {
+          alert(`Unable to get current price for ${position.coin}. Please try again.`)
+          return
+        }
+      }
+
+      // Get proper close price with post-only logic (using current price)
+      const orderPrice = getFormattedOrderPrice(closeDirection, currentPrice.toString(), asset.szDecimals, 0.05, true)
+
+      console.log(`Closing ${position.coin} position:`, {
+        direction: closeDirection,
+        size: closeSize,
+        currentMarketPrice: currentPrice,
+        orderPrice: orderPrice,
+        originalSize: position.szi
+      })
+
+      // Sign and place the close order
+      const orderRequest = await pythonSigningService.signOrder({
+        assetIndex: asset.index,
+        isBuy: !isLong, // Opposite of current position
+        price: orderPrice,
+        size: closeSize,
+        walletAddress: wallet.address.toLowerCase(),
+        reduceOnly: true, // Important: this closes the position
+        orderType: 'limit',
+        timeInForce: 'Alo' // Post-only orders required after network upgrade
+      }, privateKey)
+
+      console.log('Close order request:', orderRequest)
+      
+      const response = await hyperliquidAPI.placeOrder(orderRequest)
+      console.log('Close order response:', response)
+
+      if (response.status === 'ok') {
+        alert(`${position.coin} position closed successfully!`)
+        // Refresh positions
+        const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
+        setUserState(perpState)
+      } else {
+        const errorMsg = response.response || 'Unknown error'
+        alert(`Failed to close position: ${errorMsg}`)
+      }
+    } catch (error) {
+      console.error('Error closing position:', error)
+      alert(`Error closing position: ${error.message}`)
+    } finally {
+      setClosingPosition(null)
+    }
+  }
+
   if (loading) {
     return <PositionsSkeleton />
   }
 
   const positions = userState?.assetPositions || []
   const marginSummary = userState?.marginSummary || {}
+  const openOrders = userState?.openOrders || []
 
   return (
     <div className="h-full overflow-y-auto">
@@ -73,7 +235,7 @@ const Positions = ({ user }) => {
             <div className="text-center">
               <div className="text-gray-300 text-xs">Portfolio Value</div>
               <div className="text-white font-semibold">
-                ${parseFloat(marginSummary.accountValue || 0).toLocaleString()}
+                ${parseFloat(marginSummary.accountValue || 0).toFixed(3)}
               </div>
             </div>
             <div className="text-center">
@@ -92,6 +254,36 @@ const Positions = ({ user }) => {
           </div>
         </div>
 
+        {/* Open Orders */}
+        {openOrders.length > 0 && (
+          <div className="bg-gray-700 rounded-2xl p-4">
+            <h3 className="text-lg font-bold text-white mb-3">Open Orders ({openOrders.length})</h3>
+            <div className="space-y-2">
+              {openOrders.slice(0, 3).map((order, index) => (
+                <div key={index} className="bg-gray-600 p-3 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-white font-semibold">{order.coin}</span>
+                      <span className={`ml-2 text-sm ${order.side === 'B' ? 'text-green-400' : 'text-red-400'}`}>
+                        {order.side === 'B' ? 'BUY' : 'SELL'}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-white font-semibold">${parseFloat(order.limitPx).toFixed(3)}</div>
+                      <div className="text-gray-300 text-sm">{order.sz}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {openOrders.length > 3 && (
+                <div className="text-center text-gray-400 text-sm">
+                  +{openOrders.length - 3} more orders
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Position List */}
         {positions.length > 0 ? (
           <div className="space-y-3">
@@ -101,8 +293,8 @@ const Positions = ({ user }) => {
               const positionSide = getPositionSide(position.szi)
               const leverage = position.leverage?.value || 1
               const entryPrice = parseFloat(position.entryPx || 0)
-              const markPrice = parseFloat(position.markPrice || 0)
-              const priceChange = entryPrice > 0 ? ((markPrice - entryPrice) / entryPrice * 100) : 0
+              const currentPrice = getCurrentPrice(position) // Use live price
+              const priceChange = entryPrice > 0 && currentPrice > 0 ? ((currentPrice - entryPrice) / entryPrice * 100) : 0
               
               return (
                 <div key={index} className="bg-gray-700 rounded-xl p-4">
@@ -138,7 +330,7 @@ const Positions = ({ user }) => {
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg">
                       <div className="text-gray-300 text-xs mb-1">Mark Price</div>
-                      <div className="text-white font-semibold">{formatPrice(position.markPrice)}</div>
+                      <div className="text-white font-semibold">{formatPrice(currentPrice)}</div>
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg">
                       <div className="text-gray-300 text-xs mb-1">Margin Used</div>
@@ -150,8 +342,12 @@ const Positions = ({ user }) => {
 
                   {/* Position Actions */}
                   <div className="flex gap-2 mt-4">
-                    <button className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">
-                      Close Position
+                    <button 
+                      onClick={() => closePosition(position)}
+                      disabled={closingPosition === position.coin}
+                      className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors"
+                    >
+                      {closingPosition === position.coin ? 'Closing...' : 'Close Position'}
                     </button>
                     <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">
                       Manage
@@ -186,6 +382,49 @@ const Positions = ({ user }) => {
           </div>
         )}
       </div>
+
+      {/* Private Key Input Modal */}
+      {showPrivateKeyInput && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-white mb-4">Private Key Required</h3>
+            <p className="text-gray-300 text-sm mb-4">
+              Enter your private key to sign the close position transaction
+            </p>
+            <div className="space-y-4">
+              <input
+                type="password"
+                value={privateKey}
+                onChange={(e) => setPrivateKey(e.target.value)}
+                placeholder="0x..."
+                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPrivateKeyInput(false)
+                    setPrivateKey('')
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (privateKey.trim()) {
+                      setShowPrivateKeyInput(false)
+                    }
+                  }}
+                  disabled={!privateKey.trim()}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
