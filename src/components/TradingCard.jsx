@@ -56,6 +56,14 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
   const [privateKey, setPrivateKey] = useState('')
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false)
   const [signingServiceAvailable, setSigningServiceAvailable] = useState(false)
+  
+  // Animation states for realistic card swiping
+  const [isExiting, setIsExiting] = useState(false)
+  const [exitDirection, setExitDirection] = useState(null)
+  const [dragRotation, setDragRotation] = useState(0)
+  const [dragOpacity, setDragOpacity] = useState(1)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [showSkeleton, setShowSkeleton] = useState(false)
 
   // Add refs to prevent multiple API calls
   const hasInitializedAssets = useRef(false)
@@ -260,14 +268,55 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
     }
   }, [user])
 
+  const handleDrag = (_, info) => {
+    // Calculate rotation based on drag distance (poker card style)
+    const maxRotation = 15 // degrees
+    const dragDistance = info.offset.x
+    const rotation = Math.min(Math.max((dragDistance / 200) * maxRotation, -maxRotation), maxRotation)
+    setDragRotation(rotation)
+    
+    // Calculate opacity based on drag distance
+    const maxDistance = 150
+    const opacity = Math.max(1 - Math.abs(dragDistance) / (maxDistance * 2), 0.3)
+    setDragOpacity(opacity)
+  }
+
   const handleDragEnd = (_, info) => {
     const threshold = 100
-    if (info.offset.x > threshold) {
-      // Swiped right - Next asset
-      onSwipeRight()
-    } else if (info.offset.x < -threshold) {
-      // Swiped left - Previous asset  
-      onSwipeLeft()
+    
+    if (Math.abs(info.offset.x) > threshold) {
+      // Trigger exit animation
+      setIsExiting(true)
+      setExitDirection(info.offset.x > 0 ? 'right' : 'left')
+      setIsTransitioning(true)
+      
+      // Start showing skeleton for new card immediately
+      setTimeout(() => {
+        setShowSkeleton(true)
+      }, 150) // Show skeleton halfway through exit animation
+      
+      // Complete the swipe and load new data
+      setTimeout(() => {
+        if (info.offset.x > threshold) {
+          onSwipeRight()
+        } else {
+          onSwipeLeft()
+        }
+        
+        // Reset animation states after new data loads
+        setTimeout(() => {
+          setIsExiting(false)
+          setExitDirection(null)
+          setDragRotation(0)
+          setDragOpacity(1)
+          setIsTransitioning(false)
+          setShowSkeleton(false)
+        }, 100) // Small delay to ensure smooth transition
+      }, 300)
+    } else {
+      // Reset to original position
+      setDragRotation(0)
+      setDragOpacity(1)
     }
   }
 
@@ -482,39 +531,94 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
     : null
   const priceChange = parseFloat(currentAsset?.dayChange || 0)
 
-  // Early return if no current asset (still loading or error)
+  // Show skeleton only when no current asset
   if (!currentAsset) {
     return <TradingCardSkeleton />
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col p-4">
       <motion.div
+        key={`card-${currentAssetIndex}-${currentAsset.name}`}
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
+        onDrag={handleDrag}
         onDragEnd={handleDragEnd}
-        className="flex-1 bg-gray-700 rounded-2xl m-4 cursor-grab active:cursor-grabbing min-h-0 overflow-y-auto"
-        whileDrag={{ scale: 1.02 }}
+        className="flex-1 glass-card rounded-3xl cursor-grab active:cursor-grabbing min-h-0 overflow-y-auto pr-2"
+        initial={{ 
+          scale: 0.95, 
+          opacity: 0,
+          rotateZ: 0,
+          x: 0
+        }}
+        animate={isExiting ? {
+          x: exitDirection === 'right' ? 1000 : -1000,
+          rotateZ: exitDirection === 'right' ? 30 : -30,
+          scale: 0.8,
+          opacity: 0
+        } : {
+          scale: 1,
+          opacity: dragOpacity,
+          rotateZ: dragRotation,
+          x: 0
+        }}
+        transition={{
+          type: "spring",
+          stiffness: isExiting ? 300 : 500,
+          damping: isExiting ? 25 : 30,
+          duration: isExiting ? 0.3 : 0.6
+        }}
+        whileDrag={{ 
+          scale: 1.02,
+          cursor: 'grabbing'
+        }}
+        style={{
+          transformOrigin: 'center bottom'
+        }}
       >
         {/* Price Chart */}
-        <div className="h-60 bg-gray-800 mb-4 overflow-hidden rounded-t-2xl" style={{ minHeight: '240px' }}>
+        <div 
+          className="h-60 mb-6 overflow-hidden rounded-t-3xl relative"
+          style={{ 
+            minHeight: '240px',
+            background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.8) 0%, rgba(20, 20, 32, 0.9) 100%)',
+            border: '1px solid rgba(196, 181, 253, 0.1)',
+            borderBottom: 'none'
+          }}
+        >
           <Chart asset={currentAsset} className="w-full h-full" />
+          {/* Gradient overlay for better integration */}
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, transparent 0%, transparent 80%, rgba(30, 30, 58, 0.1) 100%)'
+            }}
+          />
         </div>
 
         {/* Asset Info */}
-        <div className="space-y-4 pr-6 pl-6 pb-6">
+        <div className="space-y-6 px-6 pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-white">{currentAsset.name}</h2>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+                {currentAsset.name}
+              </h2>
               {/* Live Data Indicator */}
               {isDataUpdating && (
                 <motion.div
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  className="w-2 h-2 bg-green-400 rounded-full animate-pulse"
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full animate-gentle-pulse"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.2) 0%, rgba(52, 211, 153, 0.3) 100%)',
+                    border: '1px solid rgba(134, 239, 172, 0.3)'
+                  }}
                   title="Live data updating"
-                />
+                >
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-green-300 font-medium">LIVE</span>
+                </motion.div>
               )}
             </div>
             <motion.div
@@ -522,135 +626,223 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
               initial={{ scale: 1 }}
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 0.3 }}
-              className={`text-lg font-semibold ${
-                priceChange >= 0 ? 'text-green-400' : 'text-red-400'
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-semibold text-sm ${
+                priceChange >= 0 
+                  ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30' 
+                  : 'bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 border border-red-500/30'
               }`}
             >
-              {priceChange >= 0 ? '+' : ''}
-              {priceChange}% (24h)
+              <span className={`text-xs ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {priceChange >= 0 ? '↗' : '↘'}
+              </span>
+              <span>
+                {priceChange >= 0 ? '+' : ''}
+                {priceChange}%
+              </span>
+              <span className="text-xs opacity-70">24h</span>
             </motion.div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <motion.div 
-              className="bg-gray-600 p-3 rounded-lg relative overflow-hidden"
-              animate={priceFlash[currentAsset.name] ? {
-                backgroundColor: priceFlash[currentAsset.name]?.direction === 'up' ? '#10b98120' : '#ef444420'
-              } : {
-                backgroundColor: '#4b5563' // gray-600 hex equivalent
+              className="relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300"
+              style={{
+                background: priceFlash[currentAsset.name] 
+                  ? `linear-gradient(135deg, ${
+                      priceFlash[currentAsset.name]?.direction === 'up' 
+                        ? 'rgba(134, 239, 172, 0.1)' 
+                        : 'rgba(253, 164, 175, 0.1)'
+                    } 0%, rgba(30, 30, 58, 0.8) 100%)`
+                  : 'linear-gradient(135deg, rgba(30, 30, 58, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)',
+                border: '1px solid rgba(196, 181, 253, 0.1)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
               }}
+              whileHover={{ y: -2, scale: 1.02 }}
+              animate={priceFlash[currentAsset.name] ? {
+                borderColor: priceFlash[currentAsset.name]?.direction === 'up' ? 'rgba(134, 239, 172, 0.3)' : 'rgba(253, 164, 175, 0.3)'
+              } : {}}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <div className="text-gray-300">Market Price</div>
+              <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mb-2">
+                <div 
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background: 'linear-gradient(135deg, #a78bfa 0%, #c084fc 100%)'
+                  }}
+                ></div>
+                <span>Market Price</span>
+              </div>
               <motion.div 
                 key={`price-${currentAsset.name}-${currentAsset.markPrice}`}
                 initial={{ scale: 1, x: 0 }}
                 animate={{ 
-                  scale: priceFlash[currentAsset.name] ? [1, 1.02, 1] : 1,
+                  scale: priceFlash[currentAsset.name] ? [1, 1.05, 1] : 1,
                   color: priceFlash[currentAsset.name] ? 
-                    (priceFlash[currentAsset.name]?.direction === 'up' ? '#10b981' : '#ef4444') : '#ffffff'
+                    (priceFlash[currentAsset.name]?.direction === 'up' ? '#10b981' : '#ef4444') : '#f8fafc'
                 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="text-white font-semibold"
+                className="text-white font-bold text-lg"
               >
                 {formatPrice(currentAsset.markPrice)}
               </motion.div>
+              
               {/* Price change indicator */}
               {priceFlash[currentAsset.name] && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, scale: 0, y: 5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0 }}
-                  className={`absolute top-1 right-1 text-xs ${
-                    priceFlash[currentAsset.name]?.direction === 'up' ? 'text-green-400' : 'text-red-400'
+                  className={`absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                    priceFlash[currentAsset.name]?.direction === 'up' 
+                      ? 'bg-green-400/20 text-green-300' 
+                      : 'bg-red-400/20 text-red-300'
                   }`}
                 >
                   {priceFlash[currentAsset.name]?.direction === 'up' ? '↗' : '↘'}
                 </motion.div>
               )}
             </motion.div>
-            <div className="bg-gray-600 p-3 rounded-lg">
-              <div className="text-gray-300">Open Interest</div>
-              <div className="text-white font-semibold">{formatOpenInterest(currentAsset.openInterest)}</div>
-            </div>
+            
+            <motion.div 
+              className="relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300"
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)',
+                border: '1px solid rgba(125, 211, 252, 0.1)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+              }}
+              whileHover={{ y: -2, scale: 1.02 }}
+            >
+              <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mb-2">
+                <div 
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    background: 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)'
+                  }}
+                ></div>
+                <span>Open Interest</span>
+              </div>
+              <div className="text-white font-bold text-lg">
+                {formatOpenInterest(currentAsset.openInterest)}
+              </div>
+            </motion.div>
           </div>
 
           {/* Trading Controls */}
-          <div className="space-y-4">
-            <div className="flex gap-3">
-              <button
+          <div className="space-y-5">
+            <div className="flex gap-4">
+              <motion.button
                 onClick={() => handleTrade('buy')}
                 disabled={isPlacingOrder}
-                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
+                className="flex-1 gradient-button-success text-white font-semibold py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={!isPlacingOrder ? { scale: 1.02, y: -1 } : {}}
+                whileTap={{ scale: 0.98 }}
               >
-                {isPlacingOrder ? 'Placing...' : 'Buy/Long'}
-              </button>
-              <button
+                <div className="flex items-center justify-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isPlacingOrder ? 'animate-pulse bg-white/60' : 'bg-white/80'}`}></div>
+                  <span>{isPlacingOrder ? 'Placing...' : 'Buy/Long'}</span>
+                </div>
+              </motion.button>
+              
+              <motion.button
                 onClick={() => handleTrade('sell')}
                 disabled={isPlacingOrder}
-                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
+                className="flex-1 gradient-button-danger text-white font-semibold py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={!isPlacingOrder ? { scale: 1.02, y: -1 } : {}}
+                whileTap={{ scale: 0.98 }}
               >
-                {isPlacingOrder ? 'Placing...' : 'Sell/Short'}
-              </button>
+                <div className="flex items-center justify-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${isPlacingOrder ? 'animate-pulse bg-white/60' : 'bg-white/80'}`}></div>
+                  <span>{isPlacingOrder ? 'Placing...' : 'Sell/Short'}</span>
+                </div>
+              </motion.button>
             </div>
 
             {/* Position Size Slider */}
-            <div>
-              <div className="flex justify-between text-sm text-gray-300 mb-2">
-                <span>Position Size</span>
-                <span>${positionSize.toFixed(2)} USDC</span>
-              </div>
-              <input
-                type="range"
-                min="10"
-                max={Math.max(10, userBalance)}
-                step="1"
-                value={positionSize}
-                onChange={(e) => setPositionSize(parseFloat(e.target.value))}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                className="w-full h-2 bg-gray-600 rounded-lg appearance-none slider"
-              />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>$10 USDC</span>
-                <span>${userBalance.toFixed(2)} USDC</span>
-              </div>
-              {userBalance < 10 && (
-                <div className="mt-2 p-2 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg">
-                  <div className="text-yellow-200 text-xs">
-                    ⚠️ Insufficient Perp balance
-                  </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-300">Position Size</span>
+                <div className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/20 to-purple-600/20 border border-purple-500/30">
+                  <span className="text-sm font-bold text-purple-300">${positionSize.toFixed(2)} USDC</span>
                 </div>
+              </div>
+              
+              <div className="relative">
+                <input
+                  type="range"
+                  min="10"
+                  max={Math.max(10, userBalance)}
+                  step="1"
+                  value={positionSize}
+                  onChange={(e) => setPositionSize(parseFloat(e.target.value))}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="w-full slider"
+                />
+                {/* Progress fill */}
+                <div 
+                  className="absolute top-1/2 left-0 h-2 rounded-full pointer-events-none -translate-y-1/2"
+                  style={{
+                    width: `${((positionSize - 10) / (Math.max(10, userBalance) - 10)) * 100}%`,
+                    background: 'linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%)'
+                  }}
+                />
+              </div>
+              
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>$10 Min</span>
+                <span>${userBalance.toFixed(2)} Available</span>
+              </div>
+              
+              {userBalance < 10 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30"
+                >
+                  <div className="flex items-center gap-2 text-amber-300 text-sm">
+                    <span className="text-base">⚠️</span>
+                    <span>Insufficient balance for trading</span>
+                  </div>
+                </motion.div>
               )}
             </div>
 
             {/* Leverage Slider */}
-            <div>
-              <div className="flex justify-between text-sm text-gray-300 mb-2">
-                <span>Leverage</span>
-                <span>{leverage}x</span>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-slate-300">Leverage</span>
+                <div className="px-3 py-1 rounded-lg bg-gradient-to-r from-rose-500/20 to-pink-500/20 border border-rose-500/30">
+                  <span className="text-sm font-bold text-rose-300">{leverage}x</span>
+                </div>
               </div>
-              <input
-                type="range"
-                min="1"
-                max={currentAsset.maxLeverage}
-                value={leverage}
-                onChange={(e) => setLeverage(parseInt(e.target.value))}
-                onMouseDown={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                className="w-full h-2 bg-gray-600 rounded-lg appearance-none slider"
-              />
-              <div className="flex justify-between text-xs text-gray-400 mt-1">
-                <span>1x</span>
-                <span>{currentAsset.maxLeverage}x</span>
+              
+              <div className="relative">
+                <input
+                  type="range"
+                  min="1"
+                  max={currentAsset.maxLeverage}
+                  value={leverage}
+                  onChange={(e) => setLeverage(parseInt(e.target.value))}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="w-full slider"
+                />
+                {/* Progress fill */}
+                <div 
+                  className="absolute top-1/2 left-0 h-2 rounded-full pointer-events-none -translate-y-1/2"
+                  style={{
+                    width: `${((leverage - 1) / (currentAsset.maxLeverage - 1)) * 100}%`,
+                    background: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 100%)'
+                  }}
+                />
+              </div>
+              
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>1x Conservative</span>
+                <span>{currentAsset.maxLeverage}x Maximum</span>
               </div>
             </div>
           </div>
-
-          {/* Swipe Instructions */}
-          {/* <div className="text-center text-xs text-gray-400">
-            <h1>Min: $10 USDC</h1>
-          </div> */}
         </div>
       </motion.div>
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useWallets } from '@privy-io/react-auth'
 import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
 import { PositionsSkeleton } from './LoadingSkeleton'
 import { pythonSigningService } from '../services/pythonSigning'
-import { getFormattedOrderPrice } from '../utils/priceUtils'
 import websocketService from '../services/websocket'
 import keyStore from '../services/keyStore'
 import { getMarketPrice, formatHyperliquidSize } from '../utils/hyperliquidPricing'
@@ -335,47 +335,121 @@ const Positions = ({ user }) => {
   const totalMarginUsed = parseFloat(marginSummary?.totalMarginUsed || 0)
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-4 pb-20">
+    <div className="h-full overflow-y-auto" style={{
+      background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)'
+    }}>
+      <motion.div 
+        className="p-4 space-y-6 pb-20"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Header with Account Summary */}
-        <div className="bg-gray-700 rounded-2xl p-4">
-          <h2 className="text-lg font-bold text-white mb-3">Active Positions</h2>
+        <motion.div 
+          className="glass-card rounded-3xl p-6"
+          whileHover={{ y: -2 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="w-3 h-3 rounded-full"
+              style={{
+                background: 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
+              }}
+            ></div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-200 to-green-300 bg-clip-text text-transparent">Active Positions</h2>
+          </div>
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <div className="text-center">
-              <div className="text-gray-300 text-xs">Portfolio Value</div>
-              <div className="text-white font-semibold">
-                ${accountValue.toFixed(3)}
+            <motion.div 
+              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center"
+              style={{
+                background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
+                border: '1px solid rgba(134, 239, 172, 0.2)'
+              }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="text-emerald-300 text-xs font-medium mb-1">Portfolio Value</div>
+              <div className="text-white font-bold text-sm leading-tight break-all">
+                ${accountValue.toFixed(2)}
               </div>
-            </div>
-            <div className="text-center">
-              <div className="text-gray-300 text-xs">Total PnL</div>
-              <div className={`font-semibold ${
+            </motion.div>
+            <motion.div 
+              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center"
+              style={{
+                background: positions.reduce((sum, pos) => {
+                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
+                  return sum + (isNaN(pnl) ? 0 : pnl)
+                }, 0) >= 0 
+                  ? 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)'
+                  : 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
+                border: positions.reduce((sum, pos) => {
+                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
+                  return sum + (isNaN(pnl) ? 0 : pnl)
+                }, 0) >= 0 
+                  ? '1px solid rgba(134, 239, 172, 0.2)'
+                  : '1px solid rgba(253, 164, 175, 0.2)'
+              }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className={`text-xs font-medium mb-1 ${
                 positions.reduce((sum, pos) => {
                   const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
                   return sum + (isNaN(pnl) ? 0 : pnl)
                 }, 0) >= 0 
-                ? 'text-green-400' : 'text-red-400'
+                ? 'text-emerald-300' : 'text-rose-300'
+              }`}>Total PnL</div>
+              <div className={`font-bold text-sm leading-tight break-all ${
+                positions.reduce((sum, pos) => {
+                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
+                  return sum + (isNaN(pnl) ? 0 : pnl)
+                }, 0) >= 0 
+                ? 'text-green-300' : 'text-red-300'
               }`}>
                 {formatPnL(positions.reduce((sum, pos) => {
                   const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
                   return sum + (isNaN(pnl) ? 0 : pnl)
                 }, 0)).value}
               </div>
-            </div>
-            <div className="text-center">
-              <div className="text-gray-300 text-xs">Positions</div>
-              <div className="text-white font-semibold">{positions.length}</div>
-            </div>
+            </motion.div>
+            <motion.div 
+              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center"
+              style={{
+                background: 'linear-gradient(135deg, rgba(196, 181, 253, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                border: '1px solid rgba(196, 181, 253, 0.2)'
+              }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="text-purple-300 text-xs font-medium mb-1">Positions</div>
+              <div className="text-white font-bold text-sm leading-tight">{positions.length}</div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Open Orders */}
         {openOrders.length > 0 && (
-          <div className="bg-gray-700 rounded-2xl p-4">
-            <h3 className="text-lg font-bold text-white mb-3">Open Orders ({openOrders.length})</h3>
-            <div className="space-y-2">
+          <motion.div 
+            className="glass-card rounded-3xl p-6"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div 
+                className="w-3 h-3 rounded-full"
+                style={{
+                  background: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)'
+                }}
+              ></div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-sky-200 to-blue-300 bg-clip-text text-transparent">Open Orders ({openOrders.length})</h3>
+            </div>
+            <div className="space-y-3">
               {openOrders.slice(0, 3).map((order, index) => (
-                <div key={order.oid || index} className="bg-gray-600 p-3 rounded-lg">
+                <motion.div 
+                  key={order.oid || index} 
+                  className="p-4 rounded-2xl" 
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)',
+                    border: '1px solid rgba(196, 181, 253, 0.1)'
+                  }}
+                  whileHover={{ scale: 1.01, y: -1 }}
+                >
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="text-white font-semibold">{order.coin}</span>
@@ -388,37 +462,49 @@ const Positions = ({ user }) => {
                       <div className="text-gray-300 text-sm">{order.sz}</div>
                       {/* Only show cancel button for open/pending orders */}
                       {(!order.status || order.status === 'open' || order.status === 'pending') && (
-                        <button 
+                        <motion.button 
                           onClick={() => cancelOrder(order)}
-                          className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded mt-1 transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg mt-2 font-medium transition-colors text-white"
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.8) 0%, rgba(220, 38, 127, 0.8) 100%)',
+                            border: '1px solid rgba(244, 63, 94, 0.3)'
+                          }}
+                          whileHover={{ scale: 1.05, y: -1 }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           Cancel
-                        </button>
+                        </motion.button>
                       )}
                       {order.status === 'filled' && (
                         <div className="text-xs text-green-400 mt-1 font-medium">
                           ✓ Filled
                         </div>
                       )}
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-slate-400 mt-2 font-mono">
                         ID: {order.oid}
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
               {openOrders.length > 3 && (
-                <div className="text-center text-gray-400 text-sm">
+                <motion.div 
+                  className="text-center text-slate-400 text-sm p-3 rounded-xl"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.4) 0%, rgba(20, 20, 32, 0.6) 100%)',
+                    border: '1px solid rgba(196, 181, 253, 0.05)'
+                  }}
+                >
                   +{openOrders.length - 3} more orders
-                </div>
+                </motion.div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Position List */}
         {positions.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {positions.map((pos, index) => {
               // Robust position data extraction
               const position = pos?.position || {}
@@ -437,7 +523,14 @@ const Positions = ({ user }) => {
               const priceChange = entryPrice > 0 && currentPrice > 0 ? ((currentPrice - entryPrice) / entryPrice * 100) : 0
               
               return (
-                <div key={index} className="bg-gray-700 rounded-xl p-4">
+                <motion.div 
+                  key={index} 
+                  className="glass-card rounded-3xl p-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -2, scale: 1.01 }}
+                >
                   {/* Position Header */}
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-3">
@@ -460,29 +553,57 @@ const Positions = ({ user }) => {
 
                   {/* Position Details Grid */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="bg-gray-600 p-3 rounded-lg">
-                      <div className="text-gray-300 text-xs mb-1">Position Size</div>
-                      <div className="text-white font-semibold">{Math.abs(parseFloat(szi)).toFixed(4)}</div>
-                    </div>
-                    <div className="bg-gray-600 p-3 rounded-lg">
-                      <div className="text-gray-300 text-xs mb-1">Entry Price</div>
-                      <div className="text-white font-semibold">{formatPrice(entryPx)}</div>
-                    </div>
-                    <div className="bg-gray-600 p-3 rounded-lg">
-                      <div className="text-gray-300 text-xs mb-1">Mark Price</div>
-                      <div className="text-white font-semibold">{formatPrice(currentPrice)}</div>
-                    </div>
-                    <div className="bg-gray-600 p-3 rounded-lg">
-                      <div className="text-gray-300 text-xs mb-1">Margin Used</div>
-                      <div className="text-white font-semibold">
+                    <motion.div 
+                      className="p-4 rounded-xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(196, 181, 253, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
+                        border: '1px solid rgba(196, 181, 253, 0.2)'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="text-purple-300 text-xs mb-2 font-medium">Position Size</div>
+                      <div className="text-white font-bold text-lg">{Math.abs(parseFloat(szi)).toFixed(4)}</div>
+                    </motion.div>
+                    <motion.div 
+                      className="p-4 rounded-xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(125, 211, 252, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
+                        border: '1px solid rgba(125, 211, 252, 0.2)'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="text-sky-300 text-xs mb-2 font-medium">Entry Price</div>
+                      <div className="text-white font-bold text-lg">{formatPrice(entryPx)}</div>
+                    </motion.div>
+                    <motion.div 
+                      className="p-4 rounded-xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
+                        border: '1px solid rgba(134, 239, 172, 0.2)'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="text-emerald-300 text-xs mb-2 font-medium">Mark Price</div>
+                      <div className="text-white font-bold text-lg">{formatPrice(currentPrice)}</div>
+                    </motion.div>
+                    <motion.div 
+                      className="p-4 rounded-xl"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
+                        border: '1px solid rgba(253, 164, 175, 0.2)'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <div className="text-rose-300 text-xs mb-2 font-medium">Margin Used</div>
+                      <div className="text-white font-bold text-lg">
                         ${parseFloat(marginUsed).toFixed(2)}
                       </div>
-                    </div>
+                    </motion.div>
                   </div>
 
                   {/* Position Actions */}
-                  <div className="flex gap-2 mt-4">
-                    <button 
+                  <div className="flex gap-4 mt-6">
+                    <motion.button 
                       onClick={() => closePosition({
                         coin,
                         szi,
@@ -490,15 +611,34 @@ const Positions = ({ user }) => {
                         markPrice: currentPrice.toString()
                       })}
                       disabled={closingPosition === coin}
-                      className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors"
+                      className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                      style={{
+                        background: closingPosition === coin 
+                          ? 'linear-gradient(135deg, rgba(100, 116, 139, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%)'
+                          : 'linear-gradient(135deg, rgba(244, 63, 94, 0.8) 0%, rgba(220, 38, 127, 0.8) 100%)',
+                        border: '1px solid rgba(244, 63, 94, 0.3)'
+                      }}
+                      whileHover={!closingPosition ? { scale: 1.02, y: -1 } : {}}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      {closingPosition === coin ? 'Closing...' : 'Close Position'}
-                    </button>
-                    <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">
+                      {closingPosition === coin ? (
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Closing...</span>
+                        </div>
+                      ) : (
+                        'Close Position'
+                      )}
+                    </motion.button>
+                    <motion.button 
+                      className="flex-1 gradient-button-secondary text-white py-3 px-4 rounded-xl text-sm font-semibold"
+                      whileHover={{ scale: 1.02, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
                       Manage
-                    </button>
+                    </motion.button>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
@@ -508,68 +648,130 @@ const Positions = ({ user }) => {
 
         {/* Risk Management Info */}
         {positions.length > 0 && (
-          <div className="bg-gray-700 rounded-xl p-4">
-            <h3 className="text-white font-semibold mb-3">Risk Management</h3>
+          <motion.div 
+            className="glass-card rounded-3xl p-6"
+            whileHover={{ y: -2 }}
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div 
+                className="w-3 h-3 rounded-full"
+                style={{
+                  background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
+                }}
+              ></div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-pink-200 to-rose-300 bg-clip-text text-transparent">Risk Management</h3>
+            </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div className="bg-gray-600 p-3 rounded-lg">
-                <div className="text-gray-300 text-xs mb-1">Available Balance</div>
-                <div className="text-white font-semibold">
+              <motion.div 
+                className="p-4 rounded-xl"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
+                  border: '1px solid rgba(134, 239, 172, 0.2)'
+                }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="text-emerald-300 text-xs mb-2 font-medium">Available Balance</div>
+                <div className="text-white font-bold text-lg">
                   ${withdrawableBalance.toFixed(2)}
                 </div>
-              </div>
-              <div className="bg-gray-600 p-3 rounded-lg">
-                <div className="text-gray-300 text-xs mb-1">Margin Usage</div>
-                <div className="text-white font-semibold">
+              </motion.div>
+              <motion.div 
+                className="p-4 rounded-xl"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
+                  border: '1px solid rgba(253, 164, 175, 0.2)'
+                }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="text-rose-300 text-xs mb-2 font-medium">Margin Usage</div>
+                <div className="text-white font-bold text-lg">
                   ${totalMarginUsed.toFixed(2)}
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Private Key Input Modal */}
       {showPrivateKeyInput && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-white mb-4">Private Key Required</h3>
-            <p className="text-gray-300 text-sm mb-4">
-              Enter your private key to sign the close position transaction
-            </p>
-            <div className="space-y-4">
-              <input
-                type="password"
-                value={privateKey}
-                onChange={(e) => setPrivateKey(e.target.value)}
-                placeholder="0x..."
-                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-              />
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowPrivateKeyInput(false)
-                    setPrivateKey('')
+        <motion.div 
+          className="fixed inset-0 z-50 p-4"
+          style={{
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(8px)'
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="flex items-center justify-center h-full">
+            <motion.div 
+              className="w-full max-w-md p-6 rounded-3xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.95) 0%, rgba(20, 20, 32, 0.98) 100%)',
+                border: '1px solid rgba(196, 181, 253, 0.2)',
+                backdropFilter: 'blur(20px)'
+              }}
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{
+                    background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (privateKey.trim()) {
-                      keyStore.setPrivateKey(privateKey.trim())
-                      setShowPrivateKeyInput(false)
-                    }
-                  }}
-                  disabled={!privateKey.trim()}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-                >
-                  Continue
-                </button>
+                ></div>
+                <h3 className="text-lg font-bold bg-gradient-to-r from-pink-200 to-rose-300 bg-clip-text text-transparent">Private Key Required</h3>
               </div>
-            </div>
+              <p className="text-slate-300 text-sm mb-6">
+                Enter your private key to sign the close position transaction
+              </p>
+              <div className="space-y-6">
+                <input
+                  type="password"
+                  value={privateKey}
+                  onChange={(e) => setPrivateKey(e.target.value)}
+                  placeholder="0x..."
+                  className="w-full p-4 bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400 font-mono"
+                />
+                <div className="flex gap-3">
+                  <motion.button
+                    onClick={() => {
+                      setShowPrivateKeyInput(false)
+                      setPrivateKey('')
+                    }}
+                    className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-white"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%)',
+                      border: '1px solid rgba(100, 116, 139, 0.3)'
+                    }}
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      if (privateKey.trim()) {
+                        keyStore.setPrivateKey(privateKey.trim())
+                        setShowPrivateKeyInput(false)
+                      }
+                    }}
+                    disabled={!privateKey.trim()}
+                    className="flex-1 gradient-button-primary text-white px-4 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileHover={privateKey.trim() ? { scale: 1.02, y: -1 } : {}}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Continue
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   )
