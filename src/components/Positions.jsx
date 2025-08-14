@@ -9,6 +9,7 @@ import websocketService from '../services/websocket'
 const Positions = ({ user }) => {
   const { wallets } = useWallets()
   const [userState, setUserState] = useState(null)
+  const [openOrders, setOpenOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [closingPosition, setClosingPosition] = useState(null)
   const [privateKey, setPrivateKey] = useState('')
@@ -20,9 +21,14 @@ const Positions = ({ user }) => {
       if (user?.wallet?.address) {
         try {
           setLoading(true)
-          const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
+          const [perpState, userOpenOrders] = await Promise.all([
+            hyperliquidAPI.getUserState(user.wallet.address),
+            hyperliquidAPI.getOpenOrders(user.wallet.address)
+          ])
           // console.log('Perp state for positions:', perpState)
+          // console.log('Open orders:', userOpenOrders)
           setUserState(perpState)
+          setOpenOrders(userOpenOrders)
         } catch (error) {
           console.error('Failed to fetch user positions:', error)
         } finally {
@@ -67,10 +73,24 @@ const Positions = ({ user }) => {
       // Update user state with real-time data
       if (data) {
         console.log('👤 Positions: Received user data update:', data)
-        console.log('💰 Positions: New account value:', data.marginSummary?.accountValue)
-        console.log('📋 Positions: Open orders:', data.openOrders?.length || 0)
-        // Update the user state directly with the new data
-        setUserState(data)
+        
+        // Handle nested clearinghouseState structure from WebSocket
+        let userData = data
+        if (data.clearinghouseState) {
+          userData = data.clearinghouseState
+          console.log('💰 Positions: Using clearinghouseState data:', userData.marginSummary?.accountValue)
+        } else {
+          console.log('💰 Positions: Direct data account value:', data.marginSummary?.accountValue)
+        }
+        
+        // Update open orders if provided in WebSocket data
+        if (data.openOrders && Array.isArray(data.openOrders)) {
+          console.log('📋 Positions: Updating open orders from WebSocket:', data.openOrders.length)
+          setOpenOrders(data.openOrders)
+        }
+        
+        console.log('📋 Positions: Real-time user data update processed')
+        setUserState(userData)
       }
     }
 
@@ -126,6 +146,7 @@ const Positions = ({ user }) => {
     // Last fallback: return 0 (will show as $0.00)
     return 0
   }
+
 
   const closePosition = async (position) => {
     if (!privateKey) {
@@ -201,10 +222,26 @@ const Positions = ({ user }) => {
       console.log('Close order response:', response)
 
       if (response.status === 'ok') {
-        alert(`${position.coin} position closed successfully!`)
-        // Refresh positions
-        const perpState = await hyperliquidAPI.getUserState(user.wallet.address)
-        setUserState(perpState)
+        const orderStatus = response.response?.data?.statuses?.[0]
+        console.log('📊 Close order status:', orderStatus)
+        
+        if (orderStatus?.error) {
+          alert(`Failed to close position: ${orderStatus.error}`)
+        } else if (orderStatus?.resting) {
+          alert(`Close order placed for ${position.coin}! Order ID: ${orderStatus.resting.oid}`)
+        } else if (orderStatus?.filled) {
+          alert(`${position.coin} position closed successfully!`)
+        } else {
+          alert(`Close order submitted for ${position.coin}`)
+        }
+        
+        // Refresh both positions and open orders after close attempt
+        const [newPerpState, newOpenOrders] = await Promise.all([
+          hyperliquidAPI.getUserState(user.wallet.address),
+          hyperliquidAPI.getOpenOrders(user.wallet.address)
+        ])
+        setUserState(newPerpState)
+        setOpenOrders(newOpenOrders)
       } else {
         const errorMsg = response.response || 'Unknown error'
         alert(`Failed to close position: ${errorMsg}`)
@@ -221,9 +258,15 @@ const Positions = ({ user }) => {
     return <PositionsSkeleton />
   }
 
-  const positions = userState?.assetPositions || []
-  const marginSummary = userState?.marginSummary || {}
-  const openOrders = userState?.openOrders || []
+  // Robust data parsing with fallbacks
+  const positions = Array.isArray(userState?.assetPositions) ? userState.assetPositions : []
+  const marginSummary = userState?.marginSummary || userState?.crossMarginSummary || {}
+  // Open orders now fetched separately via state
+  
+  // Additional safety checks
+  const accountValue = parseFloat(marginSummary?.accountValue || 0)
+  const withdrawableBalance = parseFloat(userState?.withdrawable || 0)
+  const totalMarginUsed = parseFloat(marginSummary?.totalMarginUsed || 0)
 
   return (
     <div className="h-full overflow-y-auto">
@@ -235,16 +278,22 @@ const Positions = ({ user }) => {
             <div className="text-center">
               <div className="text-gray-300 text-xs">Portfolio Value</div>
               <div className="text-white font-semibold">
-                ${parseFloat(marginSummary.accountValue || 0).toFixed(3)}
+                ${accountValue.toFixed(3)}
               </div>
             </div>
             <div className="text-center">
               <div className="text-gray-300 text-xs">Total PnL</div>
               <div className={`font-semibold ${
-                positions.reduce((sum, pos) => sum + parseFloat(pos.position.unrealizedPnl || 0), 0) >= 0 
+                positions.reduce((sum, pos) => {
+                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
+                  return sum + (isNaN(pnl) ? 0 : pnl)
+                }, 0) >= 0 
                 ? 'text-green-400' : 'text-red-400'
               }`}>
-                {formatPnL(positions.reduce((sum, pos) => sum + parseFloat(pos.position.unrealizedPnl || 0), 0)).value}
+                {formatPnL(positions.reduce((sum, pos) => {
+                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
+                  return sum + (isNaN(pnl) ? 0 : pnl)
+                }, 0)).value}
               </div>
             </div>
             <div className="text-center">
@@ -260,7 +309,7 @@ const Positions = ({ user }) => {
             <h3 className="text-lg font-bold text-white mb-3">Open Orders ({openOrders.length})</h3>
             <div className="space-y-2">
               {openOrders.slice(0, 3).map((order, index) => (
-                <div key={index} className="bg-gray-600 p-3 rounded-lg">
+                <div key={order.oid || index} className="bg-gray-600 p-3 rounded-lg">
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="text-white font-semibold">{order.coin}</span>
@@ -271,6 +320,9 @@ const Positions = ({ user }) => {
                     <div className="text-right">
                       <div className="text-white font-semibold">${parseFloat(order.limitPx).toFixed(3)}</div>
                       <div className="text-gray-300 text-sm">{order.sz}</div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Order ID: {order.oid}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -288,12 +340,20 @@ const Positions = ({ user }) => {
         {positions.length > 0 ? (
           <div className="space-y-3">
             {positions.map((pos, index) => {
-              const position = pos.position
-              const pnl = formatPnL(position.unrealizedPnl)
-              const positionSide = getPositionSide(position.szi)
-              const leverage = position.leverage?.value || 1
-              const entryPrice = parseFloat(position.entryPx || 0)
-              const currentPrice = getCurrentPrice(position) // Use live price
+              // Robust position data extraction
+              const position = pos?.position || {}
+              const coin = position?.coin || 'UNKNOWN'
+              const szi = position?.szi || '0'
+              const unrealizedPnl = position?.unrealizedPnl || '0'
+              const entryPx = position?.entryPx || '0'
+              const marginUsed = position?.marginUsed || '0'
+              const leverage = position?.leverage?.value || 1
+              
+              // Safe calculations
+              const pnl = formatPnL(unrealizedPnl)
+              const positionSide = getPositionSide(szi)
+              const entryPrice = parseFloat(entryPx)
+              const currentPrice = getCurrentPrice({ coin, markPrice: entryPx }) // Use live price with fallback
               const priceChange = entryPrice > 0 && currentPrice > 0 ? ((currentPrice - entryPrice) / entryPrice * 100) : 0
               
               return (
@@ -302,7 +362,7 @@ const Positions = ({ user }) => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-3">
                       <div>
-                        <div className="text-white font-semibold text-lg">{position.coin}</div>
+                        <div className="text-white font-semibold text-lg">{coin}</div>
                         <div className={`text-sm font-medium ${positionSide.color}`}>
                           {positionSide.side} {leverage}x
                         </div>
@@ -322,11 +382,11 @@ const Positions = ({ user }) => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="bg-gray-600 p-3 rounded-lg">
                       <div className="text-gray-300 text-xs mb-1">Position Size</div>
-                      <div className="text-white font-semibold">{Math.abs(parseFloat(position.szi)).toFixed(4)}</div>
+                      <div className="text-white font-semibold">{Math.abs(parseFloat(szi)).toFixed(4)}</div>
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg">
                       <div className="text-gray-300 text-xs mb-1">Entry Price</div>
-                      <div className="text-white font-semibold">{formatPrice(position.entryPx)}</div>
+                      <div className="text-white font-semibold">{formatPrice(entryPx)}</div>
                     </div>
                     <div className="bg-gray-600 p-3 rounded-lg">
                       <div className="text-gray-300 text-xs mb-1">Mark Price</div>
@@ -335,7 +395,7 @@ const Positions = ({ user }) => {
                     <div className="bg-gray-600 p-3 rounded-lg">
                       <div className="text-gray-300 text-xs mb-1">Margin Used</div>
                       <div className="text-white font-semibold">
-                        ${parseFloat(position.marginUsed || 0).toFixed(2)}
+                        ${parseFloat(marginUsed).toFixed(2)}
                       </div>
                     </div>
                   </div>
@@ -343,11 +403,16 @@ const Positions = ({ user }) => {
                   {/* Position Actions */}
                   <div className="flex gap-2 mt-4">
                     <button 
-                      onClick={() => closePosition(position)}
-                      disabled={closingPosition === position.coin}
+                      onClick={() => closePosition({
+                        coin,
+                        szi,
+                        entryPx,
+                        markPrice: currentPrice.toString()
+                      })}
+                      disabled={closingPosition === coin}
                       className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors"
                     >
-                      {closingPosition === position.coin ? 'Closing...' : 'Close Position'}
+                      {closingPosition === coin ? 'Closing...' : 'Close Position'}
                     </button>
                     <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors">
                       Manage
@@ -369,13 +434,13 @@ const Positions = ({ user }) => {
               <div className="bg-gray-600 p-3 rounded-lg">
                 <div className="text-gray-300 text-xs mb-1">Available Balance</div>
                 <div className="text-white font-semibold">
-                  ${parseFloat(userState?.withdrawable || 0).toFixed(2)}
+                  ${withdrawableBalance.toFixed(2)}
                 </div>
               </div>
               <div className="bg-gray-600 p-3 rounded-lg">
                 <div className="text-gray-300 text-xs mb-1">Margin Usage</div>
                 <div className="text-white font-semibold">
-                  ${parseFloat(marginSummary.totalMarginUsed || 0).toFixed(2)}
+                  ${totalMarginUsed.toFixed(2)}
                 </div>
               </div>
             </div>

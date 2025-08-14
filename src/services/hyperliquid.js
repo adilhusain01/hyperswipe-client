@@ -47,23 +47,64 @@ export const hyperliquidAPI = {
     try {
       await rateLimiter.wait()
       
+      // Validate input
+      if (!userAddress || typeof userAddress !== 'string') {
+        throw new Error('Invalid user address provided')
+      }
+      
       const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
         type: 'clearinghouseState',
-        user: userAddress
+        user: userAddress.toLowerCase() // Ensure consistent formatting
+      }, {
+        timeout: 15000, // 15 second timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
-    
       
-      return response.data
+      console.log('🏦 User state response received successfully')
+      
+      // Validate and enhance response data
+      const userData = response.data || {}
+      
+      // Ensure marginSummary exists (try both marginSummary and crossMarginSummary)
+      if (!userData.marginSummary && userData.crossMarginSummary) {
+        userData.marginSummary = userData.crossMarginSummary
+      } else if (!userData.marginSummary && !userData.crossMarginSummary) {
+        userData.marginSummary = {
+          accountValue: "0.0",
+          totalMarginUsed: "0.0",
+          totalNtlPos: "0.0",
+          totalRawUsd: "0.0"
+        }
+      }
+      
+      // Ensure assetPositions is an array
+      if (!Array.isArray(userData.assetPositions)) {
+        userData.assetPositions = []
+      }
+      
+      // Note: openOrders requires a separate API call
+      // Will be fetched separately via getOpenOrders() method
+      
+      // Set withdrawable to 0 if missing
+      if (typeof userData.withdrawable === 'undefined' || userData.withdrawable === null) {
+        userData.withdrawable = "0.0"
+      }
+      
+      return userData
     } catch (error) {
-      console.error('Error fetching user state:', error)
+      console.error('❌ Error fetching user state:', error.message)
       console.error('Request details:', {
         endpoint: `${HYPERLIQUID_API_BASE}/info`,
         userAddress,
-        requestType: 'clearinghouseState'
+        requestType: 'clearinghouseState',
+        status: error.response?.status,
+        statusText: error.response?.statusText
       })
       
-      // Return empty state instead of throwing to prevent crashes
-      return {
+      // Return comprehensive fallback data structure to prevent crashes
+      const fallbackData = {
         assetPositions: [],
         crossMaintenanceMarginUsed: "0.0",
         crossMarginSummary: {
@@ -78,8 +119,22 @@ export const hyperliquidAPI = {
           totalNtlPos: "0.0",
           totalRawUsd: "0.0"
         },
-        withdrawable: "0.0"
+        withdrawable: "0.0",
+        time: Date.now()
       }
+      
+      // Log specific error types for debugging
+      if (error.code === 'ECONNABORTED') {
+        console.warn('⏰ Request timed out, using fallback data')
+      } else if (error.response?.status === 429) {
+        console.warn('🚫 Rate limit exceeded, using fallback data')
+      } else if (error.response?.status >= 500) {
+        console.warn('🛑 Server error, using fallback data')
+      } else {
+        console.warn('⚠️ Unknown error, using fallback data')
+      }
+      
+      return fallbackData
     }
   },
 
@@ -123,6 +178,46 @@ export const hyperliquidAPI = {
       
       // Instead of throwing, return null to trigger fallback data
       return null
+    }
+  },
+
+  async getOpenOrders(userAddress) {
+    try {
+      await rateLimiter.wait()
+      
+      // Validate input
+      if (!userAddress || typeof userAddress !== 'string') {
+        throw new Error('Invalid user address provided')
+      }
+      
+      const response = await axios.post(`${HYPERLIQUID_API_BASE}/info`, {
+        type: 'openOrders',
+        user: userAddress.toLowerCase()
+      }, {
+        timeout: 10000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      console.log('📋 Open orders response received successfully')
+      
+      // Ensure response is an array
+      const openOrders = Array.isArray(response.data) ? response.data : []
+      return openOrders
+      
+    } catch (error) {
+      console.error('❌ Error fetching open orders:', error.message)
+      console.error('Request details:', {
+        endpoint: `${HYPERLIQUID_API_BASE}/info`,
+        userAddress,
+        requestType: 'openOrders',
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      })
+      
+      // Return empty array as fallback
+      return []
     }
   },
 

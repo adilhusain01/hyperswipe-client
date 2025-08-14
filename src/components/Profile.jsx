@@ -68,12 +68,18 @@ const Profile = ({ user }) => {
     const handleUserDataUpdate = (data) => {
       // console.log('👤 Profile: Real-time user data update:', data)
       
-      if (data.marginSummary) {
+      // Handle nested clearinghouseState structure from WebSocket
+      let userData = data
+      if (data.clearinghouseState) {
+        userData = data.clearinghouseState
+      }
+      
+      if (userData.marginSummary) {
         setUserState(prevState => ({
           ...prevState,
-          marginSummary: data.marginSummary,
-          withdrawable: data.withdrawable,
-          assetPositions: data.assetPositions || prevState?.assetPositions
+          marginSummary: userData.marginSummary,
+          withdrawable: userData.withdrawable,
+          assetPositions: userData.assetPositions || prevState?.assetPositions
         }))
       }
     }

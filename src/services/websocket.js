@@ -78,56 +78,98 @@ class WebSocketService {
   }
 
   handleMessage(data) {
-    const { type, data: messageData } = data
+    try {
+      const { type, data: messageData } = data || {}
 
-    // Emit events to listeners
-    this.emit(type, messageData)
+      // Validate message structure
+      if (!type) {
+        console.warn('⚠️ Received message without type:', data)
+        return
+      }
 
-    // Handle specific message types
-    switch (type) {
-      case 'connected':
-        console.log('📱 Server connection confirmed')
-        break
+      // Emit events to listeners
+      this.emit(type, messageData)
 
-      case 'priceUpdate':
-        this.emit('priceUpdate', messageData)
-        break
+      // Handle specific message types with error checking
+      switch (type) {
+        case 'connected':
+          console.log('📱 Server connection confirmed')
+          break
 
-      case 'userDataUpdate':
-        this.emit('userDataUpdate', messageData)
-        break
+        case 'priceUpdate':
+          if (messageData && typeof messageData === 'object') {
+            this.emit('priceUpdate', messageData)
+          } else {
+            console.warn('⚠️ Invalid price update data:', messageData)
+          }
+          break
 
-      case 'userEvents':
-        this.emit('userEvents', messageData)
-        break
+        case 'userDataUpdate':
+          if (messageData) {
+            this.emit('userDataUpdate', messageData)
+          } else {
+            console.warn('⚠️ Empty user data update')
+          }
+          break
 
-      case 'candleUpdate':
-        this.emit('candleUpdate', messageData)
-        break
+        case 'userEvents':
+          if (messageData) {
+            this.emit('userEvents', messageData)
+          } else {
+            console.warn('⚠️ Empty user events')
+          }
+          break
 
-      case 'subscription_confirmed':
-        console.log('✅ Subscription confirmed:', messageData)
-        break
+        case 'candleUpdate':
+          if (messageData) {
+            this.emit('candleUpdate', messageData)
+          } else {
+            console.warn('⚠️ Empty candle update')
+          }
+          break
 
-      default:
-        console.log('📦 Received message:', type, messageData)
+        case 'subscription_confirmed':
+          console.log('✅ Subscription confirmed:', messageData)
+          break
+
+        case 'error':
+          console.error('❌ Server error:', messageData)
+          break
+
+        default:
+          console.log('📦 Unknown message type:', type, messageData)
+      }
+    } catch (error) {
+      console.error('❌ Error handling WebSocket message:', error)
+      console.error('Raw message data:', data)
     }
   }
 
   // Subscribe to user-specific data
   subscribeToUserData(userAddress) {
-    if (!this.isConnected) {
-      console.warn('⚠️ WebSocket not connected, cannot subscribe')
-      return
-    }
+    try {
+      if (!userAddress || typeof userAddress !== 'string') {
+        console.error('❌ Invalid user address for subscription:', userAddress)
+        return false
+      }
 
-    const message = {
-      type: 'subscribe_user_data',
-      payload: { userAddress }
-    }
+      if (!this.isConnected) {
+        console.warn('⚠️ WebSocket not connected, cannot subscribe to user data')
+        return false
+      }
 
-    this.send(message)
-    console.log('👤 Subscribed to user data for:', userAddress)
+      const message = {
+        type: 'subscribe_user_data',
+        payload: { userAddress: userAddress.toLowerCase() }
+      }
+
+      this.send(message)
+      console.log('👤 Subscribed to user data for:', userAddress)
+      return true
+    } catch (error) {
+      console.error('❌ Error subscribing to user data:', error)
+      return false
+    }
   }
 
   // Subscribe to candle data for chart

@@ -200,8 +200,8 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
           const withdrawable = parseFloat(perpState?.withdrawable || 0)
           const accountValue = parseFloat(marginSummary?.accountValue || 0)
           
-          // Use account value if withdrawable is 0 but account value exists
-          const availableBalance = withdrawable > 0 ? withdrawable : accountValue
+          // Consistent balance logic: Use account value for display consistency
+          const availableBalance = accountValue > 0 ? accountValue : withdrawable
           setUserBalance(availableBalance)
 
           // Subscribe to real-time user data updates
@@ -215,11 +215,18 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
 
     // Set up real-time user data listener
     const handleUserDataUpdate = (data) => {
-      if (data.marginSummary) {
-        const withdrawable = parseFloat(data.withdrawable || 0)
-        const accountValue = parseFloat(data.marginSummary?.accountValue || 0)
+      // Handle nested clearinghouseState structure from WebSocket
+      let userData = data
+      if (data.clearinghouseState) {
+        userData = data.clearinghouseState
+      }
+      
+      if (userData.marginSummary) {
+        const withdrawable = parseFloat(userData.withdrawable || 0)
+        const accountValue = parseFloat(userData.marginSummary?.accountValue || 0)
         
-        const availableBalance = withdrawable > 0 ? withdrawable : accountValue
+        // Consistent balance logic: Use account value for display consistency  
+        const availableBalance = accountValue > 0 ? accountValue : withdrawable
         setUserBalance(availableBalance)
       }
     }
