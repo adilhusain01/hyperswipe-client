@@ -90,9 +90,12 @@ class PythonSigningService {
       });
 
       const data = await response.json();
+      console.log('📋 Full response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.error || data.detail || 'Signing request failed');
+        console.error('❌ Server error response:', data);
+        const errorDetail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data.error || data);
+        throw new Error(`Validation failed: ${errorDetail}`);
       }
 
       if (data.success) {
@@ -106,6 +109,60 @@ class PythonSigningService {
     } catch (error) {
       console.error('🚨 Python signing error:', error);
       throw new Error(`Signing service error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Cancel an order using the Python signing service
+   * @param {Object} cancelParams - Cancel order parameters
+   * @param {string} privateKey - Private key for signing
+   * @returns {Promise<Object>} - Signed cancel request ready for Hyperliquid API
+   */
+  async signCancelOrder(cancelParams, privateKey) {
+    console.log('🐍 Signing cancel order with Python service...');
+    
+    // Validate that service is available
+    const isAvailable = await this.isServiceAvailable();
+    if (!isAvailable) {
+      throw new Error('Python signing service is not available. Please ensure it is running on localhost:8081');
+    }
+
+    try {
+      const requestData = {
+        asset_index: cancelParams.assetIndex,
+        order_id: cancelParams.orderId,
+        wallet_address: cancelParams.walletAddress,
+        private_key: privateKey
+      };
+
+      console.log('📤 Sending cancel signing request:', {
+        ...requestData,
+        private_key: '[HIDDEN]'
+      });
+
+      const response = await fetch(`${this.baseUrl}/api/v1/cancel-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const data = await response.json();
+      
+      console.log('📋 Cancel order signing response received');
+      
+      if (response.ok && data.success) {
+        console.log('✅ Cancel order signed successfully');
+        console.log('📝 Cancel signature:', data.signature);
+        return data.order_request;
+      } else {
+        throw new Error(data.error || 'Cancel signing failed');
+      }
+
+    } catch (error) {
+      console.error('🚨 Python cancel signing error:', error);
+      throw new Error(`Cancel signing service error: ${error.message}`);
     }
   }
 

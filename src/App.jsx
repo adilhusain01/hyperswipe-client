@@ -8,6 +8,7 @@ const App = () => {
   const { ready, authenticated, login, logout, user } = usePrivy()
   const [currentView, setCurrentView] = useState('trading') // 'trading', 'positions', or 'profile'
   const [currentAssetIndex, setCurrentAssetIndex] = useState(0)
+  const [totalAssets, setTotalAssets] = useState(0)
 
   if (!ready) {
     return (
@@ -94,12 +95,27 @@ const App = () => {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 h-[685px]">
             {currentView === 'trading' ? (
               <TradingCard 
                 currentAssetIndex={currentAssetIndex}
-                onSwipeLeft={() => setCurrentAssetIndex(prev => prev + 1)}
-                onSwipeRight={() => setCurrentAssetIndex(prev => prev + 1)}
+                onSwipeLeft={() => {
+                  // Swipe left = previous asset (circular)
+                  if (totalAssets > 0) {
+                    setCurrentAssetIndex(prev => 
+                      prev === 0 ? totalAssets - 1 : prev - 1
+                    )
+                  }
+                }}
+                onSwipeRight={() => {
+                  // Swipe right = next asset (circular)
+                  if (totalAssets > 0) {
+                    setCurrentAssetIndex(prev => 
+                      (prev + 1) % totalAssets
+                    )
+                  }
+                }}
+                onAssetCountChange={setTotalAssets}
                 user={user}
               />
             ) : currentView === 'positions' ? (

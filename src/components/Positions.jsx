@@ -148,6 +148,61 @@ const Positions = ({ user }) => {
   }
 
 
+  const cancelOrder = async (order) => {
+    if (!privateKey) {
+      setShowPrivateKeyInput(true)
+      return
+    }
+
+    try {
+      const wallet = wallets[0]
+      if (!wallet) {
+        alert('No wallet connected')
+        return
+      }
+
+      // Get asset metadata
+      const metaAndCtxs = await hyperliquidAPI.getMetaAndAssetCtxs()
+      const assets = formatAssetData(metaAndCtxs)
+      const asset = assets.find(a => a.name === order.coin)
+      if (!asset) {
+        alert('Asset not found')
+        return
+      }
+
+      console.log(`Cancelling order ${order.oid} for ${order.coin}`)
+
+      // Sign and place the cancel order
+      const cancelRequest = await pythonSigningService.signCancelOrder({
+        assetIndex: asset.index,
+        orderId: order.oid,
+        walletAddress: wallet.address.toLowerCase()
+      }, privateKey)
+
+      const response = await hyperliquidAPI.placeOrder(cancelRequest)
+      console.log('Cancel order response:', response)
+
+      if (response.status === 'ok') {
+        const orderStatus = response.response?.data?.statuses?.[0]
+        if (orderStatus?.error) {
+          alert(`Failed to cancel order: ${orderStatus.error}`)
+        } else {
+          alert(`Order cancelled for ${order.coin}!`)
+        }
+        
+        // Refresh open orders
+        const newOpenOrders = await hyperliquidAPI.getOpenOrders(user.wallet.address)
+        setOpenOrders(newOpenOrders)
+      } else {
+        const errorMsg = response.response || 'Unknown error'
+        alert(`Failed to cancel order: ${errorMsg}`)
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error)
+      alert(`Error cancelling order: ${error.message}`)
+    }
+  }
+
   const closePosition = async (position) => {
     if (!privateKey) {
       setShowPrivateKeyInput(true)
@@ -270,7 +325,7 @@ const Positions = ({ user }) => {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-4 pb-8">
+      <div className="p-4 space-y-4 pb-20">
         {/* Header with Account Summary */}
         <div className="bg-gray-700 rounded-2xl p-4">
           <h2 className="text-lg font-bold text-white mb-3">Active Positions</h2>
@@ -320,8 +375,22 @@ const Positions = ({ user }) => {
                     <div className="text-right">
                       <div className="text-white font-semibold">${parseFloat(order.limitPx).toFixed(3)}</div>
                       <div className="text-gray-300 text-sm">{order.sz}</div>
+                      {/* Only show cancel button for open/pending orders */}
+                      {(!order.status || order.status === 'open' || order.status === 'pending') && (
+                        <button 
+                          onClick={() => cancelOrder(order)}
+                          className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded mt-1 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      {order.status === 'filled' && (
+                        <div className="text-xs text-green-400 mt-1 font-medium">
+                          ✓ Filled
+                        </div>
+                      )}
                       <div className="text-xs text-gray-400 mt-1">
-                        Order ID: {order.oid}
+                        ID: {order.oid}
                       </div>
                     </div>
                   </div>

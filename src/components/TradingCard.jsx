@@ -39,7 +39,7 @@ const formatPrice = (price) => {
   }
 }
 
-const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => {
+const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCountChange, user }) => {
   const { wallets, ready: walletsReady } = useWallets()
   const { signMessage, authenticated, connectWallet } = usePrivy()
   const [formattedAssets, setFormattedAssets] = useState([])
@@ -90,6 +90,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
         setFormattedAssets(formatted)
         hasInitializedAssets.current = true
         console.log('✅ Assets loaded successfully:', formatted.slice(0, 3))
+        
+        // Notify parent component of asset count
+        if (onAssetCountChange) {
+          onAssetCountChange(formatted.length)
+        }
       } catch (error) {
         console.error('Failed to fetch initial assets:', error)
         // Create fallback mock data to prevent infinite loading
@@ -120,6 +125,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
           }
         ]
         setFormattedAssets(mockAssets)
+        
+        // Notify parent component of asset count for mock data too
+        if (onAssetCountChange) {
+          onAssetCountChange(mockAssets.length)
+        }
       } finally {
         setLoading(false)
       }
@@ -200,9 +210,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
           const withdrawable = parseFloat(perpState?.withdrawable || 0)
           const accountValue = parseFloat(marginSummary?.accountValue || 0)
           
-          // Consistent balance logic: Use account value for display consistency
-          const availableBalance = accountValue > 0 ? accountValue : withdrawable
-          setUserBalance(availableBalance)
+          // For trading purposes, use withdrawable balance (available after reserves)
+          // But for display consistency, show account value
+          const displayBalance = accountValue > 0 ? accountValue : withdrawable
+          const tradingBalance = withdrawable > 0 ? withdrawable : accountValue
+          setUserBalance(displayBalance)
 
           // Subscribe to real-time user data updates
           websocketService.subscribeToUserData(user.wallet.address)
@@ -242,11 +254,10 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
   const handleDragEnd = (_, info) => {
     const threshold = 100
     if (info.offset.x > threshold) {
-      // Swiped right - Execute trade
-      handleTrade('buy')
+      // Swiped right - Next asset
       onSwipeRight()
     } else if (info.offset.x < -threshold) {
-      // Swiped left - Skip
+      // Swiped left - Previous asset  
       onSwipeLeft()
     }
   }
@@ -458,8 +469,16 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, user }) => 
     )
   }
 
-  const currentAsset = formattedAssets[currentAssetIndex % formattedAssets.length]
+  // Safe asset access with bounds checking
+  const currentAsset = formattedAssets.length > 0 
+    ? formattedAssets[currentAssetIndex % formattedAssets.length] 
+    : null
   const priceChange = parseFloat(currentAsset?.dayChange || 0)
+
+  // Early return if no current asset (still loading or error)
+  if (!currentAsset) {
+    return <TradingCardSkeleton />
+  }
 
   return (
     <div className="h-full flex flex-col">
