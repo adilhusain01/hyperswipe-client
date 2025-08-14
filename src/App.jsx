@@ -3,10 +3,11 @@ import { usePrivy } from '@privy-io/react-auth'
 import TradingCard from './components/TradingCard'
 import Profile from './components/Profile'
 import Positions from './components/Positions'
+import MarketList from './components/MarketList'
 
 const App = () => {
   const { ready, authenticated, login, logout, user } = usePrivy()
-  const [currentView, setCurrentView] = useState('trading') // 'trading', 'positions', or 'profile'
+  const [currentView, setCurrentView] = useState('trading') // 'trading', 'positions', 'markets', or 'profile'
   const [currentAssetIndex, setCurrentAssetIndex] = useState(0)
   const [totalAssets, setTotalAssets] = useState(0)
 
@@ -69,6 +70,17 @@ const App = () => {
                 </svg>
               </button>
               <button
+                onClick={() => setCurrentView('markets')}
+                className={`p-2 rounded-lg transition-colors ${
+                  currentView === 'markets' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                }`}
+                title="Markets"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M3,3V21H21V19H5V3H3M20,8V10H15V8H20M20,12V14H15V12H20M20,16V18H15V16H20M11,8V10H6V8H11M11,12V14H6V12H11M11,16V18H6V16H11Z"/>
+                </svg>
+              </button>
+              <button
                 onClick={() => setCurrentView('profile')}
                 className={`p-2 rounded-lg transition-colors ${
                   currentView === 'profile' ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-600'
@@ -120,6 +132,14 @@ const App = () => {
               />
             ) : currentView === 'positions' ? (
               <Positions user={user} />
+            ) : currentView === 'markets' ? (
+              <MarketList 
+                user={user} 
+                onSelectAsset={(assetIndex) => {
+                  setCurrentAssetIndex(assetIndex)
+                  setCurrentView('trading')
+                }}
+              />
             ) : (
               <Profile user={user} />
             )}

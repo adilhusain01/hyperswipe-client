@@ -12,6 +12,8 @@ import {
   getOrderDirection
 } from '../services/pythonSigning'
 import { getFormattedOrderPrice } from '../utils/priceUtils'
+import keyStore from '../services/keyStore'
+import { getMarketPrice, calculatePositionSize } from '../utils/hyperliquidPricing'
 
 // Format open interest with appropriate units
 const formatOpenInterest = (openInterest) => {
@@ -59,7 +61,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
   const hasInitializedAssets = useRef(false)
   const lastUserAddress = useRef(null)
 
-  // Check signing service availability
+  // Check signing service availability and load stored private key
   useEffect(() => {
     const checkSigningService = async () => {
       try {
@@ -71,6 +73,13 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
         setSigningServiceAvailable(false)
       }
     }
+    
+    // Load stored private key if available
+    const storedKey = keyStore.getPrivateKey()
+    if (storedKey) {
+      setPrivateKey(storedKey)
+    }
+    
     checkSigningService()
   }, [])
 
@@ -314,13 +323,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
       // Calculate order parameters
       const isBuy = getOrderDirection(direction)
       
-      // Use proper Hyperliquid price formatting with asset's szDecimals (post-only during upgrade)
-      const orderPrice = getFormattedOrderPrice(direction, asset.markPrice, asset.szDecimals, 0.05, true)
+      // Use proper Hyperliquid price formatting for market-like execution
+      const orderPrice = getMarketPrice(asset.markPrice, isBuy, asset.szDecimals, 2)
       
-      // Calculate size based on USDC position size and mark price
-      const markPx = parseFloat(asset.markPrice)
-      const rawOrderSize = positionSize / markPx
-      const orderSize = rawOrderSize.toFixed(asset.szDecimals)
+      // Calculate size with proper formatting
+      const orderSize = calculatePositionSize(positionSize, asset.markPrice, asset.szDecimals)
       
       console.log('📊 Order parameters:', {
         asset: asset.name,
@@ -334,7 +341,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
         szDecimals: asset.szDecimals
       })
       
-      // Construct the order action (using post-only during network upgrade)
+      // Construct the order action for market-like execution
       const action = constructOrderAction(
         asset.index,
         isBuy,
@@ -342,7 +349,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
         orderSize,
         false, // reduceOnly
         'limit',
-        'Alo' // Post-only (Add Liquidity Only) - required after network upgrade
+        'Ioc' // Immediate or Cancel for market-like execution
       )
 
       // Generate nonce
@@ -378,7 +385,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
         walletAddress: wallet.address.toLowerCase(),
         reduceOnly: false,
         orderType: 'limit',
-        timeInForce: 'Alo' // Post-only orders required after network upgrade
+        timeInForce: 'Ioc' // Immediate or Cancel for market-like execution
       }, privateKey)
 
       // Place the order
@@ -600,6 +607,8 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                 step="1"
                 value={positionSize}
                 onChange={(e) => setPositionSize(parseFloat(e.target.value))}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
                 className="w-full h-2 bg-gray-600 rounded-lg appearance-none slider"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -627,6 +636,8 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                 max={currentAsset.maxLeverage}
                 value={leverage}
                 onChange={(e) => setLeverage(parseInt(e.target.value))}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
                 className="w-full h-2 bg-gray-600 rounded-lg appearance-none slider"
               />
               <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -671,6 +682,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
               <button
                 onClick={() => {
                   if (privateKey.trim()) {
+                    keyStore.setPrivateKey(privateKey.trim())
                     setShowPrivateKeyInput(false)
                     // Retry the trade with the provided private key
                     // This will be called automatically by handleTrade

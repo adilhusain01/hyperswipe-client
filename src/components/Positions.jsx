@@ -5,6 +5,8 @@ import { PositionsSkeleton } from './LoadingSkeleton'
 import { pythonSigningService } from '../services/pythonSigning'
 import { getFormattedOrderPrice } from '../utils/priceUtils'
 import websocketService from '../services/websocket'
+import keyStore from '../services/keyStore'
+import { getMarketPrice, formatHyperliquidSize } from '../utils/hyperliquidPricing'
 
 const Positions = ({ user }) => {
   const { wallets } = useWallets()
@@ -15,6 +17,14 @@ const Positions = ({ user }) => {
   const [privateKey, setPrivateKey] = useState('')
   const [showPrivateKeyInput, setShowPrivateKeyInput] = useState(false)
   const [livePrices, setLivePrices] = useState({})
+
+  // Load stored private key on component mount
+  useEffect(() => {
+    const storedKey = keyStore.getPrivateKey()
+    if (storedKey) {
+      setPrivateKey(storedKey)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchUserState = async () => {
@@ -231,7 +241,7 @@ const Positions = ({ user }) => {
       const positionSize = parseFloat(position.szi)
       const isLong = positionSize > 0
       const closeDirection = isLong ? 'sell' : 'buy'
-      const closeSize = Math.abs(positionSize).toString()
+      const closeSize = formatHyperliquidSize(Math.abs(positionSize), asset.szDecimals)
 
       // Get current market price using the same logic as display
       let currentPrice = getCurrentPrice(position)
@@ -248,8 +258,9 @@ const Positions = ({ user }) => {
         }
       }
 
-      // Get proper close price with post-only logic (using current price)
-      const orderPrice = getFormattedOrderPrice(closeDirection, currentPrice.toString(), asset.szDecimals, 0.05, true)
+      // Use proper Hyperliquid price formatting for market-like execution
+      // For closing positions: buy to close short, sell to close long
+      const orderPrice = getMarketPrice(currentPrice.toString(), !isLong, asset.szDecimals, 2)
 
       console.log(`Closing ${position.coin} position:`, {
         direction: closeDirection,
@@ -268,7 +279,7 @@ const Positions = ({ user }) => {
         walletAddress: wallet.address.toLowerCase(),
         reduceOnly: true, // Important: this closes the position
         orderType: 'limit',
-        timeInForce: 'Alo' // Post-only orders required after network upgrade
+        timeInForce: 'Ioc' // Immediate or Cancel for market-like execution
       }, privateKey)
 
       console.log('Close order request:', orderRequest)
@@ -546,6 +557,7 @@ const Positions = ({ user }) => {
                 <button
                   onClick={() => {
                     if (privateKey.trim()) {
+                      keyStore.setPrivateKey(privateKey.trim())
                       setShowPrivateKeyInput(false)
                     }
                   }}
