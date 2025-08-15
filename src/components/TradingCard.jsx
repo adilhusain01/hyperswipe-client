@@ -64,6 +64,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
   const [dragOpacity, setDragOpacity] = useState(1)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showSkeleton, setShowSkeleton] = useState(false)
+  const [isDragDisabled, setIsDragDisabled] = useState(false)
 
   // Add refs to prevent multiple API calls
   const hasInitializedAssets = useRef(false)
@@ -267,6 +268,14 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
       websocketService.off('userDataUpdate', handleUserDataUpdate)
     }
   }, [user])
+
+  // Reset sliders when asset changes
+  useEffect(() => {
+    if (formattedAssets.length > 0) {
+      setPositionSize(10) // Reset to minimum $10
+      setLeverage(1) // Reset to 1x leverage
+    }
+  }, [currentAssetIndex, formattedAssets.length])
 
   const handleDrag = (_, info) => {
     // Calculate rotation based on drag distance (poker card style)
@@ -537,14 +546,14 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
   }
 
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="h-full flex flex-col p-2">
       <motion.div
         key={`card-${currentAssetIndex}-${currentAsset.name}`}
-        drag="x"
+        drag={isDragDisabled ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
-        className="flex-1 glass-card rounded-3xl cursor-grab active:cursor-grabbing min-h-0 overflow-y-auto pr-2"
+        className={`flex-1 glass-card rounded-3xl ${isDragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} min-h-0 overflow-y-auto pr-1`}
         initial={{ 
           scale: 0.95, 
           opacity: 0,
@@ -568,17 +577,17 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
           damping: isExiting ? 25 : 30,
           duration: isExiting ? 0.3 : 0.6
         }}
-        whileDrag={{ 
+        whileDrag={!isDragDisabled ? { 
           scale: 1.02,
           cursor: 'grabbing'
-        }}
+        } : {}}
         style={{
           transformOrigin: 'center bottom'
         }}
       >
         {/* Price Chart */}
         <div 
-          className="h-60 mb-6 overflow-hidden rounded-t-3xl relative"
+          className="h-60 mb-3 overflow-hidden rounded-t-3xl relative"
           style={{ 
             minHeight: '240px',
             background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.8) 0%, rgba(20, 20, 32, 0.9) 100%)',
@@ -597,7 +606,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
         </div>
 
         {/* Asset Info */}
-        <div className="space-y-6 px-6 pb-6">
+        <div className="space-y-3 px-3 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
@@ -728,7 +737,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
           </div>
 
           {/* Trading Controls */}
-          <div className="space-y-5">
+          <div className="space-y-2">
             <div className="flex gap-4">
               <motion.button
                 onClick={() => handleTrade('buy')}
@@ -758,7 +767,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
             </div>
 
             {/* Position Size Slider */}
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-slate-300">Position Size</span>
                 <div className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/20 to-purple-600/20 border border-purple-500/30">
@@ -774,8 +783,33 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                   step="1"
                   value={positionSize}
                   onChange={(e) => setPositionSize(parseFloat(e.target.value))}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    setIsDragDisabled(true)
+                  }}
+                  onMouseUp={() => {
+                    setIsDragDisabled(false)
+                    setDragRotation(0)
+                    setDragOpacity(1)
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    setIsDragDisabled(true)
+                  }}
+                  onTouchEnd={() => {
+                    setIsDragDisabled(false)
+                    setDragRotation(0)
+                    setDragOpacity(1)
+                  }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    setIsDragDisabled(true)
+                  }}
+                  onPointerUp={() => {
+                    setIsDragDisabled(false)
+                    setDragRotation(0)
+                    setDragOpacity(1)
+                  }}
                   className="w-full slider"
                 />
                 {/* Progress fill */}
@@ -808,7 +842,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
             </div>
 
             {/* Leverage Slider */}
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-slate-300">Leverage</span>
                 <div className="px-3 py-1 rounded-lg bg-gradient-to-r from-rose-500/20 to-pink-500/20 border border-rose-500/30">
@@ -823,8 +857,33 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                   max={currentAsset.maxLeverage}
                   value={leverage}
                   onChange={(e) => setLeverage(parseInt(e.target.value))}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    setIsDragDisabled(true)
+                  }}
+                  onMouseUp={() => {
+                    setIsDragDisabled(false)
+                    setDragRotation(0)
+                    setDragOpacity(1)
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    setIsDragDisabled(true)
+                  }}
+                  onTouchEnd={() => {
+                    setIsDragDisabled(false)
+                    setDragRotation(0)
+                    setDragOpacity(1)
+                  }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation()
+                    setIsDragDisabled(true)
+                  }}
+                  onPointerUp={() => {
+                    setIsDragDisabled(false)
+                    setDragRotation(0)
+                    setDragOpacity(1)
+                  }}
                   className="w-full slider"
                 />
                 {/* Progress fill */}

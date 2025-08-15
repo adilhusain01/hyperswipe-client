@@ -5,6 +5,7 @@ import TradingCard from './components/TradingCard'
 import Profile from './components/Profile'
 import Positions from './components/Positions'
 import MarketList from './components/MarketList'
+import CryptoTrailBackground from './components/CryptoTrailBackground'
 
 // Beautiful Romantic Navigation Icons
 const TradingIcon = () => (
@@ -109,10 +110,11 @@ const App = () => {
   if (!ready) {
     return (
       <div className="flex items-center justify-center min-h-screen" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)'}}>
+        <CryptoTrailBackground />
         <motion.div 
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center"
+          className="text-center relative z-20"
         >
           <div className="w-16 h-16 border-4 border-purple-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-slate-300 font-medium">Initializing HyperSwipe...</p>
@@ -124,10 +126,11 @@ const App = () => {
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen px-4" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)'}}>
+        <CryptoTrailBackground />
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="glass-card p-8 rounded-3xl max-w-sm w-full"
+          className="glass-card p-8 rounded-3xl max-w-sm w-full relative z-20"
         >
           <motion.div
             initial={{ scale: 0.9 }}
@@ -164,7 +167,10 @@ const App = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)'}}>
-      <div className="w-full max-w-sm mx-4">
+      {/* Crypto Trail Background */}
+      <CryptoTrailBackground />
+      
+      <div className="w-full max-w-sm mx-4 relative z-20">
         {/* Mobile-style container */}
         <motion.div 
           initial={{ y: 20, opacity: 0, scale: 0.95 }}
