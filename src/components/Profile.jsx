@@ -243,103 +243,6 @@ const Profile = ({ user }) => {
           </div>
         </motion.div>
 
-        {/* Wallet Balance (Arbitrum Sepolia) */}
-        <motion.div 
-          className="glass-card rounded-3xl p-6"
-          whileHover={{ y: -2 }}
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{
-                background: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)'
-              }}
-            ></div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-sky-200 to-blue-300 bg-clip-text text-transparent">
-              Arbitrum Sepolia Balance
-            </h3>
-          </div>
-          
-          <motion.div 
-            className="relative overflow-hidden rounded-2xl p-6 mb-6"
-            style={{
-              background: 'linear-gradient(135deg, rgba(125, 211, 252, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
-              border: '1px solid rgba(125, 211, 252, 0.2)'
-            }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <div className="text-sky-300 text-sm font-medium mb-2">USDC Balance</div>
-                <div className="text-white text-2xl font-bold">
-                  ${walletUSDCBalance.toFixed(2)}
-                </div>
-                <div className="text-sky-200 text-sm opacity-80">USDC</div>
-                {walletUSDCBalance === 0 && (
-                  <div className="text-xs text-sky-400 mt-2 px-2 py-1 bg-sky-500/10 rounded-lg inline-block">
-                    Using mock USDC for testnet
-                  </div>
-                )}
-              </div>
-              <motion.div 
-                className="text-sky-400"
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-              >
-                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-              </motion.div>
-            </div>
-          </motion.div>
-          
-          {/* Transfer to Perp Account */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-slate-300 text-sm font-medium mb-3 block">Transfer to Hyperliquid</label>
-              <div className="flex gap-3">
-                <input
-                  type="number"
-                  placeholder="Amount USDC"
-                  value={transferAmount}
-                  onChange={(e) => setTransferAmount(e.target.value)}
-                  className="flex-1 bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-3 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400"
-                  disabled={isTransferring}
-                />
-                <motion.button
-                  onClick={handleTransferToPerp}
-                  disabled={isTransferring || !transferAmount}
-                  className="gradient-button-primary text-white px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                  whileHover={!isTransferring && transferAmount ? { scale: 1.02, y: -1 } : {}}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {isTransferring ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Sending...</span>
-                    </div>
-                  ) : (
-                    'Send'
-                  )}
-                </motion.button>
-              </div>
-              {transferError && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-red-300 text-sm mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl"
-                >
-                  {transferError}
-                </motion.div>
-              )}
-              <div className="text-slate-400 text-xs mt-3 flex justify-between">
-                <span>Min: $10 USDC</span>
-                <span>Max: ${walletUSDCBalance.toFixed(2)} USDC</span>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Hyperliquid Account Summary */}
         <motion.div 
           className="glass-card rounded-3xl p-6"
@@ -463,6 +366,105 @@ const Profile = ({ user }) => {
             </motion.div>
           )}
         </motion.div>
+
+        {/* Wallet Balance (Arbitrum Sepolia) */}
+        <motion.div 
+          className="glass-card rounded-3xl p-6"
+          whileHover={{ y: -2 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="w-3 h-3 rounded-full"
+              style={{
+                background: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)'
+              }}
+            ></div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-sky-200 to-blue-300 bg-clip-text text-transparent">
+              Arbitrum Sepolia Balance
+            </h3>
+          </div>
+          
+          <motion.div 
+            className="relative overflow-hidden rounded-2xl p-6 mb-6"
+            style={{
+              background: 'linear-gradient(135deg, rgba(125, 211, 252, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
+              border: '1px solid rgba(125, 211, 252, 0.2)'
+            }}
+            whileHover={{ scale: 1.02 }}
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-sky-300 text-sm font-medium mb-2">USDC Balance</div>
+                <div className="text-white text-2xl font-bold">
+                  ${walletUSDCBalance.toFixed(2)}
+                </div>
+                <div className="text-sky-200 text-sm opacity-80">USDC</div>
+                {walletUSDCBalance === 0 && (
+                  <div className="text-xs text-sky-400 mt-2 px-2 py-1 bg-sky-500/10 rounded-lg inline-block">
+                    Using mock USDC for testnet
+                  </div>
+                )}
+              </div>
+              <motion.div 
+                className="text-sky-400"
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              >
+                <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+              </motion.div>
+            </div>
+          </motion.div>
+          
+          {/* Transfer to Perp Account */}
+          <div className="space-y-4">
+            <div>
+              <label className="text-slate-300 text-sm font-medium mb-3 block">Transfer to Hyperliquid</label>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  placeholder="Amount USDC"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  className="flex-1 bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-3 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400"
+                  disabled={isTransferring}
+                />
+                <motion.button
+                  onClick={handleTransferToPerp}
+                  disabled={isTransferring || !transferAmount}
+                  className="gradient-button-primary text-white px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={!isTransferring && transferAmount ? { scale: 1.02, y: -1 } : {}}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isTransferring ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <span>Sending...</span>
+                    </div>
+                  ) : (
+                    'Send'
+                  )}
+                </motion.button>
+              </div>
+              {transferError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-red-300 text-sm mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl"
+                >
+                  {transferError}
+                </motion.div>
+              )}
+              <div className="text-slate-400 text-xs mt-3 flex justify-between">
+                <span>Min: $10 USDC</span>
+                <span>Max: ${walletUSDCBalance.toFixed(2)} USDC</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        
 
       </motion.div>
     </div>
