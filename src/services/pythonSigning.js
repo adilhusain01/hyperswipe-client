@@ -47,7 +47,7 @@ class PythonSigningService {
     // Validate that service is available
     const isAvailable = await this.isServiceAvailable();
     if (!isAvailable) {
-      throw new Error('Python signing service is not available. Please ensure it is running on localhost:8081');
+      throw new Error('Python signing service is not available. Please ensure it is running');
     }
 
     const {
@@ -124,7 +124,7 @@ class PythonSigningService {
     // Validate that service is available
     const isAvailable = await this.isServiceAvailable();
     if (!isAvailable) {
-      throw new Error('Python signing service is not available. Please ensure it is running on localhost:8081');
+      throw new Error('Python signing service is not available. Please ensure it is running');
     }
 
     try {

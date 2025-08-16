@@ -431,7 +431,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
 
       // Check if Python signing service is available
       if (!signingServiceAvailable) {
-        alert('Python signing service is not available. Please ensure it is running on localhost:8081')
+        alert('Python signing service is not available. Please ensure it is running')
         return
       }
 
