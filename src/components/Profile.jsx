@@ -54,6 +54,13 @@ const Profile = ({ user }) => {
       if (user?.wallet?.address) {
         try {
           setLoading(true)
+          
+          // Clear any cached data from previous user
+          setUserState(null)
+          setSpotState(null)
+          setWalletUSDCBalance(0)
+          setPerpAccountExists(false)
+          
           const [perpState, spotBalances, walletUSDC, perpAccount] = await Promise.all([
             hyperliquidAPI.getUserState(user.wallet.address),
             hyperliquidAPI.getSpotBalances(user.wallet.address),
@@ -75,6 +82,13 @@ const Profile = ({ user }) => {
         } finally {
           setLoading(false)
         }
+      } else {
+        // No user - clear all data
+        setUserState(null)
+        setSpotState(null)
+        setWalletUSDCBalance(0)
+        setPerpAccountExists(false)
+        setLoading(false)
       }
     }
 
@@ -101,10 +115,11 @@ const Profile = ({ user }) => {
     fetchInitialUserState()
     websocketService.on('userDataUpdate', handleUserDataUpdate)
 
+    // Clear previous user's data when user changes
     return () => {
       websocketService.off('userDataUpdate', handleUserDataUpdate)
     }
-  }, [user])
+  }, [user?.wallet?.address]) // Depend on actual address to detect user changes
 
   const copyAddress = async () => {
     if (user?.wallet?.address) {

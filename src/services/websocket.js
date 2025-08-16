@@ -244,6 +244,19 @@ class WebSocketService {
     }
   }
 
+  // Clear client-side user data (for user switching)
+  clearClientUserData() {
+    // Clear user-specific event listeners but keep connection
+    const userEvents = ['userDataUpdate', 'userEvents']
+    userEvents.forEach(event => {
+      if (this.listeners.has(event)) {
+        this.listeners.set(event, []) // Clear all listeners for this event
+      }
+    })
+    
+    console.log('🧹 Cleared client-side user data listeners')
+  }
+
   disconnect() {
     if (this.ws) {
       this.ws.close()

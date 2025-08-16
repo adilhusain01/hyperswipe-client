@@ -6,6 +6,7 @@ import Profile from './components/Profile'
 import Positions from './components/Positions'
 import MarketList from './components/MarketList'
 import CryptoTrailBackground from './components/CryptoTrailBackground'
+import websocketService from './services/websocket'
 
 // Beautiful Romantic Navigation Icons
 const TradingIcon = () => (
@@ -270,7 +271,16 @@ const App = () => {
             {/* <h1 className="text-lg font-bold text-white">HyperSwipe</h1> */}
             
             <motion.button
-              onClick={logout}
+              onClick={() => {
+                // Clear WebSocket user data before logout
+                websocketService.clearClientUserData()
+                
+                // Clear any stored user data
+                localStorage.removeItem('hyperswipe_user_cache')
+                sessionStorage.clear()
+                
+                logout()
+              }}
               className="p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-red-500/20 transition-all duration-300 backdrop-blur-sm"
               title="Logout"
               whileHover="hover"

@@ -31,6 +31,12 @@ const Positions = ({ user }) => {
       if (user?.wallet?.address) {
         try {
           setLoading(true)
+          
+          // Clear any cached data from previous user
+          setUserState(null)
+          setOpenOrders([])
+          setLivePrices({})
+          
           const [perpState, userOpenOrders] = await Promise.all([
             hyperliquidAPI.getUserState(user.wallet.address),
             hyperliquidAPI.getOpenOrders(user.wallet.address)
@@ -44,6 +50,12 @@ const Positions = ({ user }) => {
         } finally {
           setLoading(false)
         }
+      } else {
+        // No user - clear all data
+        setUserState(null)
+        setOpenOrders([])
+        setLivePrices({})
+        setLoading(false)
       }
     }
 
@@ -55,7 +67,7 @@ const Positions = ({ user }) => {
     // Refresh every 10 seconds for live updates (backup)
     const interval = setInterval(fetchUserState, 10000)
     return () => clearInterval(interval)
-  }, [user])
+  }, [user?.wallet?.address]) // Depend on actual address to detect user changes
 
   // WebSocket effect for live price updates
   useEffect(() => {

@@ -214,8 +214,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
   useEffect(() => {
     const fetchInitialUserBalance = async () => {
       if (user?.wallet?.address) {
-        // Prevent multiple calls for the same user
-        if (lastUserAddress.current === user.wallet.address) return
+        // Clear cached data when user changes
+        if (lastUserAddress.current && lastUserAddress.current !== user.wallet.address) {
+          setUserBalance(0)
+          console.log('🧹 Clearing cached data for user switch:', lastUserAddress.current, '->', user.wallet.address)
+        }
         lastUserAddress.current = user.wallet.address
         
         try {
@@ -240,6 +243,10 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
           console.error('Failed to fetch user balance:', error)
           setUserBalance(0)
         }
+      } else {
+        // No user - clear balance and cached address
+        setUserBalance(0)
+        lastUserAddress.current = null
       }
     }
 
@@ -267,7 +274,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
     return () => {
       websocketService.off('userDataUpdate', handleUserDataUpdate)
     }
-  }, [user])
+  }, [user?.wallet?.address]) // Depend on actual address to detect user changes
 
   // Reset sliders when asset changes
   useEffect(() => {
