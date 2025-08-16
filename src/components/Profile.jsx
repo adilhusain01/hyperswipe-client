@@ -4,6 +4,7 @@ import { useWallets } from '@privy-io/react-auth'
 import { hyperliquidAPI } from '../services/hyperliquid'
 import { walletService, hyperliquidAccountService } from '../services/wallet'
 import websocketService from '../services/websocket'
+import telegramService from '../services/telegramService'
 import { ProfileSkeleton } from './LoadingSkeleton'
 
 const CopyIcon = ({ onClick, copied }) => (
@@ -48,6 +49,12 @@ const Profile = ({ user }) => {
   const [transferAmount, setTransferAmount] = useState('')
   const [isTransferring, setIsTransferring] = useState(false)
   const [transferError, setTransferError] = useState('')
+  
+  // Telegram states
+  const [telegramStatus, setTelegramStatus] = useState({ linked: false, loading: true })
+  const [showTelegramSetup, setShowTelegramSetup] = useState(false)
+  const [telegramChatId, setTelegramChatId] = useState('')
+  const [telegramLinking, setTelegramLinking] = useState(false)
 
   useEffect(() => {
     const fetchInitialUserState = async () => {
@@ -180,6 +187,70 @@ const Profile = ({ user }) => {
       setTransferError('Transfer failed: ' + error.message)
     } finally {
       setIsTransferring(false)
+    }
+  }
+
+  // Telegram Functions
+  useEffect(() => {
+    const checkTelegramStatus = async () => {
+      if (user?.wallet?.address) {
+        try {
+          const status = await telegramService.checkTelegramStatus(user.wallet.address)
+          setTelegramStatus({ ...status, loading: false })
+        } catch (error) {
+          console.error('Error checking Telegram status:', error)
+          setTelegramStatus({ linked: false, loading: false, error: error.message })
+        }
+      }
+    }
+    checkTelegramStatus()
+  }, [user?.wallet?.address])
+
+  const handleLinkTelegram = async () => {
+    if (!telegramChatId.trim()) {
+      alert('Please enter your Telegram Chat ID')
+      return
+    }
+
+    try {
+      setTelegramLinking(true)
+      await telegramService.linkTelegramAccount(
+        user.wallet.address,
+        telegramChatId.trim()
+      )
+      
+      setTelegramStatus({ linked: true, loading: false })
+      setShowTelegramSetup(false)
+      setTelegramChatId('')
+      alert('🎉 Telegram notifications linked successfully!')
+    } catch (error) {
+      console.error('Error linking Telegram:', error)
+      alert('❌ Failed to link Telegram: ' + error.message)
+    } finally {
+      setTelegramLinking(false)
+    }
+  }
+
+  const handleTestNotification = async () => {
+    try {
+      await telegramService.sendTestNotification(user.wallet.address, 'pnl_alert')
+      alert('📱 Test notification sent! Check your Telegram.')
+    } catch (error) {
+      console.error('Error sending test notification:', error)
+      alert('❌ Failed to send test notification: ' + error.message)
+    }
+  }
+
+  const handleUnlinkTelegram = async () => {
+    if (confirm('Are you sure you want to unlink Telegram notifications?')) {
+      try {
+        await telegramService.unlinkTelegramAccount(user.wallet.address)
+        setTelegramStatus({ linked: false, loading: false })
+        alert('Telegram notifications unlinked successfully')
+      } catch (error) {
+        console.error('Error unlinking Telegram:', error)
+        alert('❌ Failed to unlink Telegram: ' + error.message)
+      }
     }
   }
 
@@ -464,7 +535,164 @@ const Profile = ({ user }) => {
           </div>
         </motion.div>
 
-        
+        {/* Telegram Notifications */}
+        <motion.div 
+          className="glass-card rounded-3xl p-6"
+          whileHover={{ y: -2 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="w-3 h-3 rounded-full"
+              style={{
+                background: telegramStatus.linked 
+                  ? 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
+                  : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+              }}
+            ></div>
+            <h3 className="text-lg font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent">
+              📱 Telegram Alerts
+            </h3>
+            {telegramStatus.linked && (
+              <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-lg border border-green-500/30">
+                ✓ Connected
+              </div>
+            )}
+          </div>
+          
+          {telegramStatus.loading ? (
+            <div className="text-center py-4">
+              <div className="w-6 h-6 border-2 border-blue-300/30 border-t-blue-300 rounded-full animate-spin mx-auto"></div>
+              <div className="text-slate-400 text-sm mt-2">Checking status...</div>
+            </div>
+          ) : telegramStatus.linked ? (
+            // Linked State
+            <div className="space-y-4">
+              <motion.div 
+                className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
+                whileHover={{ scale: 1.01 }}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="text-green-300 text-sm font-medium">🎉 Telegram Connected!</div>
+                </div>
+                <div className="text-slate-300 text-sm mb-4">
+                  You'll receive real-time notifications for:
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
+                  <div>• 📈 Position P&L updates</div>
+                  <div>• ⚙️ Order fills & executions</div>
+                  <div>• ⚠️ Risk management alerts</div>
+                  <div>• 📊 Daily portfolio summaries</div>
+                </div>
+              </motion.div>
+              
+              <div className="flex gap-3">
+                <motion.button
+                  onClick={handleTestNotification}
+                  className="flex-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 px-4 py-3 rounded-xl text-sm font-semibold border border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-300"
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  📱 Test Alert
+                </motion.button>
+                <motion.button
+                  onClick={handleUnlinkTelegram}
+                  className="bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 px-4 py-3 rounded-xl text-sm font-semibold border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 transition-all duration-300"
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Unlink
+                </motion.button>
+              </div>
+            </div>
+          ) : (
+            // Not Linked State
+            <div className="space-y-4">
+              <motion.div 
+                className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20"
+                whileHover={{ scale: 1.01 }}
+              >
+                <div className="text-blue-300 text-sm font-medium mb-2">🚀 Get Live Trading Alerts!</div>
+                <div className="text-slate-300 text-sm mb-3">
+                  Connect Telegram to receive instant notifications for position updates, P&L changes, and risk alerts.
+                </div>
+                <div className="text-xs text-slate-400">
+                  • Professional-grade trading alerts • Works on all devices • Always connected
+                </div>
+              </motion.div>
+              
+              {!showTelegramSetup ? (
+                <motion.button
+                  onClick={() => setShowTelegramSetup(true)}
+                  className="w-full gradient-button-primary text-white py-3 px-4 rounded-xl text-sm font-semibold"
+                  whileHover={{ scale: 1.02, y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  🔗 Connect Telegram
+                </motion.button>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                    <div className="text-purple-300 text-sm font-medium mb-3">🤖 Setup Instructions:</div>
+                    <div className="space-y-2 text-xs text-slate-300">
+                      <div>1. Click the button below to open our bot</div>
+                      <div>2. Send <code className="bg-slate-700 px-1 rounded">/start</code> to the bot</div>
+                      <div>3. Copy your Chat ID from the bot's response</div>
+                      <div>4. Paste it in the field below</div>
+                    </div>
+                  </div>
+                  
+                  <motion.a
+                    href={telegramService.generateBotLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 px-4 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300"
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    📱 Open Telegram Bot
+                  </motion.a>
+                  
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      placeholder="Enter your Chat ID (e.g., 123456789)"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value)}
+                      className="w-full bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-3 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400 font-mono"
+                      disabled={telegramLinking}
+                    />
+                    <div className="flex gap-3">
+                      <motion.button
+                        onClick={() => setShowTelegramSetup(false)}
+                        className="flex-1 bg-gradient-to-r from-slate-600/50 to-slate-500/50 text-slate-300 py-3 px-4 rounded-xl text-sm font-semibold border border-slate-600/30 hover:from-slate-600/70 hover:to-slate-500/70 transition-all duration-300"
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        Cancel
+                      </motion.button>
+                      <motion.button
+                        onClick={handleLinkTelegram}
+                        disabled={telegramLinking || !telegramChatId.trim()}
+                        className="flex-1 gradient-button-primary text-white py-3 px-4 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={!telegramLinking && telegramChatId.trim() ? { scale: 1.02, y: -1 } : {}}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {telegramLinking ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span>Linking...</span>
+                          </div>
+                        ) : (
+                          '🔗 Link Account'
+                        )}
+                      </motion.button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
 
       </motion.div>
     </div>
