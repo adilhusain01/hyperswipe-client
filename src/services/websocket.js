@@ -158,16 +158,47 @@ class WebSocketService {
         return false
       }
 
+      // Unsubscribe from previous user if different
+      if (this.currentUserAddress && this.currentUserAddress !== userAddress.toLowerCase()) {
+        console.log('🔄 Switching user subscription from', this.currentUserAddress, 'to', userAddress.toLowerCase())
+        this.unsubscribeFromUserData(this.currentUserAddress)
+      }
+
       const message = {
         type: 'subscribe_user_data',
         payload: { userAddress: userAddress.toLowerCase() }
       }
 
       this.send(message)
+      this.currentUserAddress = userAddress.toLowerCase()
       console.log('👤 Subscribed to user data for:', userAddress)
       return true
     } catch (error) {
       console.error('❌ Error subscribing to user data:', error)
+      return false
+    }
+  }
+
+  // Unsubscribe from user-specific data
+  unsubscribeFromUserData(userAddress) {
+    try {
+      if (!userAddress) return false
+      
+      if (!this.isConnected) {
+        console.warn('⚠️ WebSocket not connected, cannot unsubscribe')
+        return false
+      }
+
+      const message = {
+        type: 'unsubscribe_user_data',
+        payload: { userAddress: userAddress.toLowerCase() }
+      }
+
+      this.send(message)
+      console.log('👤 Unsubscribed from user data for:', userAddress)
+      return true
+    } catch (error) {
+      console.error('❌ Error unsubscribing from user data:', error)
       return false
     }
   }
@@ -246,6 +277,12 @@ class WebSocketService {
 
   // Clear client-side user data (for user switching)
   clearClientUserData() {
+    // Unsubscribe from current user
+    if (this.currentUserAddress) {
+      this.unsubscribeFromUserData(this.currentUserAddress)
+      this.currentUserAddress = null
+    }
+    
     // Clear user-specific event listeners but keep connection
     const userEvents = ['userDataUpdate', 'userEvents']
     userEvents.forEach(event => {
@@ -254,7 +291,7 @@ class WebSocketService {
       }
     })
     
-    console.log('🧹 Cleared client-side user data listeners')
+    console.log('🧹 Cleared client-side user data and unsubscribed')
   }
 
   disconnect() {
