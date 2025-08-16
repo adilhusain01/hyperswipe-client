@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://hyperswipe.app/sitemap.xml
+
+# HyperSwipe - Tinder-Style Perpetuals Trading Platform
+# https://hyperswipe.app

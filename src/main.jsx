@@ -4,6 +4,7 @@ import { PrivyProvider } from '@privy-io/react-auth'
 import { arbitrumSepolia } from 'viem/chains'
 import './index.css'
 import App from './App.jsx'
+import hyperswipeLogo from './assets/logos/hyperswipe-no-bg.png'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,10 +14,10 @@ createRoot(document.getElementById('root')).render(
         defaultChain: arbitrumSepolia,
         supportedChains: [arbitrumSepolia],
         appearance: {
-          accentColor: "#6A6FF5",
+          accentColor: "#8b5cf6",
           theme: "dark",
           showWalletLoginFirst: false,
-          logo: "https://auth.privy.io/logos/privy-logo-dark.png",
+          logo: hyperswipeLogo,
           walletChainType: "ethereum-only",
           walletList: [
             "detected_wallets",
@@ -25,10 +26,13 @@ createRoot(document.getElementById('root')).render(
             "rainbow",
             "okx_wallet",
             "wallet_connect"
-          ]
+          ],
+          landingHeader: "Welcome to HyperSwipe",
+          landingSubheader: "Trade perpetuals with style. Swipe your way to profits.",
+          loginMessage: "Connect your wallet to start trading",
+          showWelcomeScreen: true
         },
         loginMethods: [
-          "email",
           "wallet",
           "google"
         ],
