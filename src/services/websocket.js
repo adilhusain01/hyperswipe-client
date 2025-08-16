@@ -10,7 +10,7 @@ class WebSocketService {
     
     // Server URL - unified Python server with WebSocket support
     this.serverUrl = import.meta.env.MODE === 'production' 
-      ? 'wss://your-server-domain.com/ws' 
+      ? 'ws://app.hyperswipe.rizzmo.site/ws' 
       : 'ws://localhost:8081/ws'
   }
 

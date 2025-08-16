@@ -3,7 +3,7 @@
  * Interfaces with the Python FastAPI signing service for Hyperliquid compatibility
  */
 
-const SIGNING_SERVICE_BASE_URL = 'http://localhost:8081';
+const SIGNING_SERVICE_BASE_URL = import.meta.env.VITE_PYTHON_SIGNING_SERVICE_URL || 'http://localhost:8081';
 
 class PythonSigningService {
   constructor() {
