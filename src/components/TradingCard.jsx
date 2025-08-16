@@ -617,7 +617,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
-                {currentAsset.name}
+                {currentAsset.name}/USD
               </h2>
               {/* Live Data Indicator */}
               {isDataUpdating && (
