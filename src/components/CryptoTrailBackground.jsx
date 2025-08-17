@@ -269,32 +269,48 @@ const CryptoTrail = ({ trailId, gridSize = 80 }) => {
             className="w-full h-full flex items-center justify-center relative overflow-hidden"
             style={{
               borderRadius: '22%',
-              background: `linear-gradient(135deg, ${segment.icon.color}50, ${segment.icon.glowColor}30, ${segment.icon.color}40)`,
-              border: `2px solid ${segment.icon.glowColor}90`,
-              backdropFilter: 'blur(12px)',
+              background: `linear-gradient(135deg, 
+                rgba(0, 0, 0, 0.3) 0%, 
+                rgba(255, 255, 255, 0.1) 20%, 
+                ${segment.icon.color}40 40%,
+                ${segment.icon.glowColor}30 60%,
+                rgba(0, 0, 0, 0.2) 100%
+              )`,
+              border: `1px solid rgba(255, 255, 255, 0.2)`,
+              backdropFilter: 'blur(15px)',
               boxShadow: `
-                0 4px 20px ${segment.icon.glowColor}40,
-                0 0 ${25 - index * 2}px ${segment.icon.glowColor}50,
-                inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.1)
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 4px 16px ${segment.icon.glowColor}20,
+                0 0 ${25 - index * 2}px ${segment.icon.glowColor}30,
+                inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2)
               `
             }}
           >
-            {/* iPhone-style inner highlight */}
+            {/* Glass inner highlight */}
             <div 
-              className="absolute inset-1 opacity-25"
+              className="absolute inset-1 opacity-40"
               style={{
                 borderRadius: '18%',
-                background: `linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%)`
+                background: `linear-gradient(135deg, 
+                  rgba(255, 255, 255, 0.4) 0%, 
+                  rgba(255, 255, 255, 0.2) 30%,
+                  ${segment.icon.color}20 50%,
+                  transparent 100%
+                )`
               }}
             />
             
-            {/* Subtle texture overlay */}
+            {/* Glass texture overlay */}
             <div 
-              className="absolute inset-2 opacity-15"
+              className="absolute inset-2 opacity-20"
               style={{
                 borderRadius: '15%',
-                background: `radial-gradient(circle at 25% 25%, ${segment.icon.color}60, transparent 60%)`
+                background: `radial-gradient(circle at 25% 25%, 
+                  rgba(255, 255, 255, 0.3) 0%,
+                  ${segment.icon.color}40 30%,
+                  transparent 70%
+                )`
               }}
             />
             
@@ -304,25 +320,30 @@ const CryptoTrail = ({ trailId, gridSize = 80 }) => {
               className="w-10 h-10 relative z-10"
               style={{
                 filter: `
-                  drop-shadow(0 2px 8px ${segment.icon.glowColor}60)
-                  drop-shadow(0 0 12px ${segment.icon.color}40)
-                  contrast(1.15) 
-                  saturate(1.2)
-                  brightness(1.05)
+                  drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4))
+                  drop-shadow(0 0 8px ${segment.icon.glowColor}50)
+                  drop-shadow(0 0 16px ${segment.icon.color}30)
+                  contrast(1.2) 
+                  saturate(1.3)
+                  brightness(1.1)
                 `
               }}
             />
             
-            {/* Gentle breathing glow effect */}
+            {/* Glass breathing glow effect */}
             <motion.div
-              className="absolute inset-0 opacity-5"
+              className="absolute inset-0 opacity-10"
               style={{
                 borderRadius: '22%',
-                background: `radial-gradient(circle at center, ${segment.icon.color}60, transparent 70%)`
+                background: `radial-gradient(circle at center, 
+                  rgba(255, 255, 255, 0.2) 0%,
+                  ${segment.icon.color}40 40%,
+                  transparent 80%
+                )`
               }}
               animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.05, 0.15, 0.05]
+                scale: [1, 1.15, 1],
+                opacity: [0.1, 0.25, 0.1]
               }}
               transition={{
                 duration: 3 + index * 0.2,
@@ -354,19 +375,20 @@ const CryptoTrailBackground = () => {
       className="fixed inset-0 overflow-hidden pointer-events-none"
       style={{
         background: 'transparent',
-        zIndex: 1
+        zIndex: 1,
+        backdropFilter: 'blur(0.5px)'
       }}
     >
-      {/* Ambient background effects */}
+      {/* Glass ambient background effects */}
       <motion.div
         className="absolute inset-0"
         animate={{
           background: [
-            'radial-gradient(circle at 20% 20%, rgba(196, 181, 253, 0.08) 0%, transparent 50%)',
-            'radial-gradient(circle at 80% 80%, rgba(253, 164, 175, 0.08) 0%, transparent 50%)',
-            'radial-gradient(circle at 50% 50%, rgba(134, 239, 172, 0.08) 0%, transparent 50%)',
-            'radial-gradient(circle at 20% 80%, rgba(125, 211, 252, 0.08) 0%, transparent 50%)',
-            'radial-gradient(circle at 20% 20%, rgba(196, 181, 253, 0.08) 0%, transparent 50%)',
+            'radial-gradient(circle at 20% 20%, rgba(196, 181, 253, 0.06) 0%, rgba(0, 0, 0, 0.02) 30%, transparent 60%)',
+            'radial-gradient(circle at 80% 80%, rgba(253, 164, 175, 0.06) 0%, rgba(0, 0, 0, 0.02) 30%, transparent 60%)',
+            'radial-gradient(circle at 50% 50%, rgba(134, 239, 172, 0.06) 0%, rgba(0, 0, 0, 0.02) 30%, transparent 60%)',
+            'radial-gradient(circle at 20% 80%, rgba(125, 211, 252, 0.06) 0%, rgba(0, 0, 0, 0.02) 30%, transparent 60%)',
+            'radial-gradient(circle at 20% 20%, rgba(196, 181, 253, 0.06) 0%, rgba(0, 0, 0, 0.02) 30%, transparent 60%)',
           ]
         }}
         transition={{
@@ -376,31 +398,37 @@ const CryptoTrailBackground = () => {
         }}
       />
       
-      {/* Subtle grid pattern */}
+      {/* Glass grid pattern */}
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-5"
         style={{
           backgroundImage: `
-            linear-gradient(rgba(196, 181, 253, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(196, 181, 253, 0.02) 1px, transparent 1px)
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
           `,
           backgroundSize: '80px 80px',
+          backdropFilter: 'blur(0.5px)'
         }}
       />
       
       {/* Single crypto trail */}
       <CryptoTrail trailId="trail-1" gridSize={80} />
       
-      {/* Floating ambient orbs */}
+      {/* Glass floating ambient orbs */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full opacity-10"
+        className="absolute top-1/4 left-1/4 w-40 h-40 rounded-full"
         style={{
-          background: 'radial-gradient(circle, #f7931a 0%, transparent 70%)',
-          filter: 'blur(30px)',
+          background: `radial-gradient(circle, 
+            rgba(247, 147, 26, 0.15) 0%, 
+            rgba(0, 0, 0, 0.05) 40%, 
+            transparent 70%
+          )`,
+          filter: 'blur(25px)',
+          backdropFilter: 'blur(2px)'
         }}
         animate={{
           scale: [1, 1.3, 1],
-          opacity: [0.1, 0.2, 0.1],
+          opacity: [0.08, 0.15, 0.08],
           x: [0, 50, -30, 0],
           y: [0, -40, 30, 0]
         }}
@@ -412,14 +440,19 @@ const CryptoTrailBackground = () => {
       />
       
       <motion.div
-        className="absolute bottom-1/3 right-1/3 w-32 h-32 rounded-full opacity-10"
+        className="absolute bottom-1/3 right-1/3 w-32 h-32 rounded-full"
         style={{
-          background: 'radial-gradient(circle, #627eea 0%, transparent 70%)',
-          filter: 'blur(25px)',
+          background: `radial-gradient(circle, 
+            rgba(98, 126, 234, 0.15) 0%, 
+            rgba(0, 0, 0, 0.05) 40%, 
+            transparent 70%
+          )`,
+          filter: 'blur(20px)',
+          backdropFilter: 'blur(2px)'
         }}
         animate={{
           scale: [1.2, 0.8, 1.2],
-          opacity: [0.1, 0.25, 0.1],
+          opacity: [0.08, 0.18, 0.08],
           x: [0, -60, 40, 0],
           y: [0, 50, -20, 0]
         }}

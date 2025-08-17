@@ -1,9 +1,11 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { arbitrumSepolia } from 'viem/chains'
 import './index.css'
 import App from './App.jsx'
+import Documentation from './pages/Documentation.jsx'
 import hyperswipeLogo from './assets/logos/hyperswipe-no-bg.png'
 
 createRoot(document.getElementById('root')).render(
@@ -53,7 +55,12 @@ createRoot(document.getElementById('root')).render(
         },
       }}
     >
-      <App />
+      <Router>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/docs" element={<Documentation />} />
+        </Routes>
+      </Router>
     </PrivyProvider>
   </StrictMode>,
 )

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import TradingCard from './components/TradingCard'
 import Profile from './components/Profile'
@@ -7,100 +8,57 @@ import Positions from './components/Positions'
 import MarketList from './components/MarketList'
 import CryptoTrailBackground from './components/CryptoTrailBackground'
 import websocketService from './services/websocket'
+import hyperswipeLogo from './assets/logos/hyperswipe-no-bg.png'
 
-// Beautiful Romantic Navigation Icons
+// Import Glass Icons
+import squareChartLineIcon from './glass_icons/square-chart-line.svg'
+import layersIcon from './glass_icons/layers.svg'
+import clipboardCheckIcon from './glass_icons/clipboard-check.svg'
+import userIcon from './glass_icons/user.svg'
+import connectIcon from './glass_icons/connect.svg'
+import bookOpenIcon from './glass_icons/book-open.svg'
+
+// Glass Navigation Icons
 const TradingIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="tradingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#c4b5fd" />
-        <stop offset="50%" stopColor="#a78bfa" />
-        <stop offset="100%" stopColor="#8b5cf6" />
-      </linearGradient>
-    </defs>
-    <circle cx="12" cy="12" r="9" stroke="url(#tradingGrad)" strokeWidth="2" fill="none"/>
-    <path d="M7 14l3-3 3 3 4-4" stroke="url(#tradingGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M15 8l2 2v-2h-2z" stroke="url(#tradingGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="7" cy="14" r="1.5" fill="#fda4af"/>
-    <circle cx="10" cy="11" r="1.5" fill="#86efac"/>
-    <circle cx="13" cy="14" r="1.5" fill="#7dd3fc"/>
-    <circle cx="17" cy="10" r="1.5" fill="#fcd34d"/>
-  </svg>
+  <img src={squareChartLineIcon} alt="Trading" className="w-5 h-5" />
 )
 
 const PositionsIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="positionsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#86efac" />
-        <stop offset="50%" stopColor="#4ade80" />
-        <stop offset="100%" stopColor="#22c55e" />
-      </linearGradient>
-    </defs>
-    <rect x="3" y="5" width="18" height="14" rx="3" stroke="url(#positionsGrad)" strokeWidth="2" fill="none"/>
-    <path d="M8 12l2.5 2.5L16 9" stroke="url(#positionsGrad)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="7" cy="8" r="1" fill="#fcd34d"/>
-    <circle cx="12" cy="8" r="1" fill="#fda4af"/>
-    <circle cx="17" cy="8" r="1" fill="#7dd3fc"/>
-  </svg>
+  <img src={clipboardCheckIcon} alt="Positions" className="w-5 h-5" />
 )
 
 const MarketsIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="marketsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#7dd3fc" />
-        <stop offset="50%" stopColor="#38bdf8" />
-        <stop offset="100%" stopColor="#0ea5e9" />
-      </linearGradient>
-    </defs>
-    <rect x="4" y="4" width="16" height="16" rx="3" stroke="url(#marketsGrad)" strokeWidth="2" fill="none"/>
-    <rect x="7" y="8" width="3" height="1.5" rx="0.75" fill="url(#marketsGrad)"/>
-    <rect x="14" y="8" width="3" height="1.5" rx="0.75" fill="url(#marketsGrad)"/>
-    <rect x="7" y="11" width="3" height="1.5" rx="0.75" fill="url(#marketsGrad)"/>
-    <rect x="14" y="11" width="3" height="1.5" rx="0.75" fill="url(#marketsGrad)"/>
-    <rect x="7" y="14" width="3" height="1.5" rx="0.75" fill="url(#marketsGrad)"/>
-    <rect x="14" y="14" width="3" height="1.5" rx="0.75" fill="url(#marketsGrad)"/>
-    <circle cx="8" cy="6" r="0.8" fill="#fcd34d"/>
-    <circle cx="16" cy="6" r="0.8" fill="#fda4af"/>
-  </svg>
+  <img src={layersIcon} alt="Markets" className="w-5 h-5" />
 )
 
 const ProfileIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="profileGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#fda4af" />
-        <stop offset="50%" stopColor="#f472b6" />
-        <stop offset="100%" stopColor="#ec4899" />
-      </linearGradient>
-    </defs>
-    <circle cx="12" cy="12" r="9" stroke="url(#profileGrad)" strokeWidth="2" fill="none"/>
-    <circle cx="12" cy="9" r="3" stroke="url(#profileGrad)" strokeWidth="2" fill="none"/>
-    <path d="M6 19c0-3.5 2.7-6 6-6s6 2.5 6 6" stroke="url(#profileGrad)" strokeWidth="2" strokeLinecap="round"/>
-    <circle cx="10" cy="8.5" r="0.5" fill="#fcd34d"/>
-    <circle cx="14" cy="8.5" r="0.5" fill="#fcd34d"/>
-    <path d="M10.5 10.5c0.5 0.3 1 0.3 1.5 0" stroke="url(#profileGrad)" strokeWidth="1" strokeLinecap="round"/>
-  </svg>
+  <img src={userIcon} alt="Profile" className="w-5 h-5" />
 )
 
 const LogoutIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-    <defs>
-      <linearGradient id="logoutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#fca5a5" />
-        <stop offset="50%" stopColor="#f87171" />
-        <stop offset="100%" stopColor="#ef4444" />
-      </linearGradient>
-    </defs>
-    <rect x="3" y="5" width="11" height="14" rx="2" stroke="url(#logoutGrad)" strokeWidth="2" fill="none"/>
-    <path d="M15 12h6m-3-2l3 2-3 2" stroke="url(#logoutGrad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <circle cx="7" cy="8" r="0.8" fill="#fcd34d"/>
-    <circle cx="10" cy="8" r="0.8" fill="#86efac"/>
-    <rect x="6" y="11" width="5" height="1" rx="0.5" fill="url(#logoutGrad)"/>
-    <rect x="6" y="13" width="3" height="1" rx="0.5" fill="url(#logoutGrad)"/>
-  </svg>
+  <img src={connectIcon} alt="Logout" className="w-5 h-5" />
 )
+
+// Documentation Component
+const DocumentationIcon = () => (
+  <img src={bookOpenIcon} alt="Documentation" className="w-4 h-4" />
+)
+
+const Documentation = () => {
+  const navigate = useNavigate()
+
+  return (
+    <motion.button
+      onClick={() => navigate('/docs')}
+      className="w-8 h-8 bg-black/20 border border-white/10 rounded-lg flex items-center justify-center hover:border-white/20 hover:bg-white/10 transition-all duration-300 group backdrop-blur-sm"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      title="Documentation"
+    >
+      <DocumentationIcon />
+    </motion.button>
+  )
+}
 
 const App = () => {
   const { ready, authenticated, login, logout, user } = usePrivy()
@@ -110,87 +68,92 @@ const App = () => {
 
   if (!ready) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)'}}>
+      <div className="min-h-screen font-sans" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)', fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
         <CryptoTrailBackground />
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center relative z-20"
-        >
-          <div className="w-16 h-16 border-4 border-purple-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-300 font-medium">Initializing HyperSwipe...</p>
-        </motion.div>
+        <div className="flex items-center justify-center min-h-screen relative z-20">
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center"
+          >
+            <div className="w-16 h-16 border-4 border-white/20 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-300 font-medium">Initializing HyperSwipe...</p>
+          </motion.div>
+        </div>
       </div>
     )
   }
 
   if (!authenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen px-4" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)'}}>
+      <div className="min-h-screen font-sans" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)', fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
         <CryptoTrailBackground />
-        <motion.div 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="glass-card p-8 rounded-3xl max-w-sm w-full relative z-20"
-        >
-          <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            className="text-center mb-8"
+        <div className="flex flex-col items-center justify-center min-h-screen px-4 relative z-20">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="glass-card p-8 rounded-2xl max-w-sm w-full bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
           >
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-3">
-              HyperSwipe
-            </h1>
-            <div className="w-12 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mx-auto mb-4"></div>
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              className="text-center mb-8"
+            >
+              <div className="flex items-center justify-center mb-4">
+                <img src={hyperswipeLogo} alt="HyperSwipe" className="h-12" />
+              </div>
+              <h1 className="text-2xl font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent mb-3">
+                HyperSwipe
+              </h1>
+              <div className="w-12 h-0.5 bg-white/20 rounded-full mx-auto mb-4"></div>
+            </motion.div>
+            
+            <p className="text-slate-300 text-center mb-8 leading-relaxed font-normal">
+              Swipe your way to trading perpetuals on
+              <span className="text-slate-100 font-medium"> Hyperliquid Testnet</span>
+            </p>
+            
+            <motion.button
+              onClick={login}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-medium py-3 px-6 rounded-xl text-base transition-all duration-300 backdrop-blur-sm"
+            >
+              Connect Wallet
+            </motion.button>
+            
+            <p className="text-xs text-slate-400 text-center mt-4 font-normal">
+              Connect your wallet to start trading
+            </p>
           </motion.div>
-          
-          <p className="text-slate-300 text-center mb-8 leading-relaxed">
-            Swipe your way to trading perpetuals on
-            <span className="text-purple-300 font-medium"> Hyperliquid Testnet</span>
-          </p>
-          
-          <motion.button
-            onClick={login}
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full gradient-button-primary text-white font-medium py-3 px-6 rounded-xl text-base"
-          >
-            Connect Wallet
-          </motion.button>
-          
-          <p className="text-xs text-slate-400 text-center mt-4">
-            Connect your wallet to start trading
-          </p>
-        </motion.div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)'}}>
+    <div className="min-h-screen font-sans" style={{background: 'linear-gradient(135deg, #0a0a0f 0%, #141420 100%)', fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
       {/* Crypto Trail Background */}
       <CryptoTrailBackground />
       
-      <div className="w-full max-w-sm mx-4 relative z-20">
-        {/* Mobile-style container */}
-        <motion.div 
-          initial={{ y: 20, opacity: 0, scale: 0.95 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          className="glass-card rounded-3xl overflow-hidden h-[750px] relative"
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center p-3" style={{
-            background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.9) 0%, rgba(20, 20, 32, 0.95) 100%)',
-            borderBottom: '1px solid rgba(196, 181, 253, 0.1)'
-          }}>
+      <div className="min-h-screen flex items-center justify-center relative z-20">
+        <div className="w-full max-w-sm mx-4">
+          {/* Mobile-style container */}
+          <motion.div 
+            initial={{ y: 20, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            className="glass-card rounded-2xl overflow-hidden h-[750px] relative bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center p-3 bg-black/20 backdrop-blur-xl border-b border-white/10">
             {/* Navigation */}
             <div className="flex space-x-1.5">
               <motion.button
                 onClick={() => setCurrentView('trading')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'trading' 
-                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25' 
-                    : 'text-slate-300 hover:text-white hover:bg-white/10 backdrop-blur-sm'
+                    ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/5 backdrop-blur-sm'
                 }`}
                 title="Trading"
                 whileHover="hover"
@@ -210,8 +173,8 @@ const App = () => {
                 onClick={() => setCurrentView('markets')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'markets' 
-                    ? 'bg-gradient-to-r from-sky-500 to-blue-500 text-white shadow-lg shadow-sky-500/25' 
-                    : 'text-slate-300 hover:text-white hover:bg-white/10 backdrop-blur-sm'
+                    ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/5 backdrop-blur-sm'
                 }`}
                 title="Markets"
                 whileHover="hover"
@@ -230,8 +193,8 @@ const App = () => {
                 onClick={() => setCurrentView('positions')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'positions' 
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/25' 
-                    : 'text-slate-300 hover:text-white hover:bg-white/10 backdrop-blur-sm'
+                    ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/5 backdrop-blur-sm'
                 }`}
                 title="Positions"
                 whileHover="hover"
@@ -250,8 +213,8 @@ const App = () => {
                 onClick={() => setCurrentView('profile')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'profile' 
-                    ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-lg shadow-pink-500/25' 
-                    : 'text-slate-300 hover:text-white hover:bg-white/10 backdrop-blur-sm'
+                    ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/5 backdrop-blur-sm'
                 }`}
                 title="Profile"
                 whileHover="hover"
@@ -270,22 +233,22 @@ const App = () => {
             
             {/* <h1 className="text-lg font-bold text-white">HyperSwipe</h1> */}
             
-            <motion.button
-              onClick={() => {
-                // Clear WebSocket user data before logout
-                websocketService.clearClientUserData()
-                
-                // Clear any stored user data
-                localStorage.removeItem('hyperswipe_user_cache')
-                sessionStorage.clear()
-                
-                logout()
-              }}
-              className="p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-red-500/20 transition-all duration-300 backdrop-blur-sm"
-              title="Logout"
-              whileHover="hover"
-              whileTap={{ scale: 0.95 }}
-            >
+              <motion.button
+                onClick={() => {
+                  // Clear WebSocket user data before logout
+                  websocketService.clearClientUserData()
+                  
+                  // Clear any stored user data
+                  localStorage.removeItem('hyperswipe_user_cache')
+                  sessionStorage.clear()
+                  
+                  logout()
+                }}
+                className="p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
+                title="Logout"
+                whileHover="hover"
+                whileTap={{ scale: 0.95 }}
+              >
               <motion.div
                 variants={{
                   hover: { rotate: 15, scale: 1.1 }
@@ -297,10 +260,8 @@ const App = () => {
             </motion.button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 h-[685px]" style={{
-            background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.8) 0%, rgba(20, 20, 32, 0.9) 100%)'
-          }}>
+            {/* Content */}
+            <div className="flex-1 h-[685px] bg-black/10">
             {currentView === 'trading' ? (
               <TradingCard 
                 currentAssetIndex={currentAssetIndex}
@@ -336,11 +297,103 @@ const App = () => {
             ) : (
               <Profile user={user} />
             )}
+            </div>
+          </motion.div>
+
+          {/* Creators Section - Outside main container */}
+          <motion.div 
+            className="flex items-center justify-center py-4 gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1, duration: 0.5 }}
+          >
+          <span className="text-slate-400 text-xs font-medium">Built by</span>
+          <div className="flex items-center gap-2">
+            <motion.a
+              href="https://x.com/0xAdilHusain"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative"
+              initial={{ opacity: 0, scale: 0, rotate: 0, y: 0 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                transition: { delay: 1.2, duration: 0.3, type: "spring" }
+              }}
+              whileHover={{ 
+                scale: 1.15, 
+                rotate: 15, 
+                y: -2,
+                transition: { duration: 0.3, ease: "easeOut" }
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 group-hover:border-white/30 group-hover:shadow-lg group-hover:shadow-white/10 transition-all duration-300 backdrop-blur-sm">
+                <img
+                  src="https://x.com/0xAdilHusain"
+                  alt="Adil's Twitter"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "https://pbs.twimg.com/profile_images/1947715281520103424/riYRziYF_400x400.jpg"
+                  }}
+                />
+              </div>
+              <div className="absolute -top-9 left-1/2 transform -translate-x-1/2 bg-black/20 backdrop-blur-xl border border-white/10 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                @0xAdilHusain
+              </div>
+            </motion.a>
+            
+            <motion.a
+              href="https://x.com/0xrizzmo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative"
+              initial={{ opacity: 0, scale: 0, rotate: 0, y: 0 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                transition: { delay: 1.3, duration: 0.3, type: "spring" }
+              }}
+              whileHover={{ 
+                scale: 1.15, 
+                rotate: 15, 
+                y: -2,
+                transition: { duration: 0.3, ease: "easeOut" }
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden border border-white/10 group-hover:border-white/30 group-hover:shadow-lg group-hover:shadow-white/10 transition-all duration-300 backdrop-blur-sm">
+                <img
+                  src="https://x.com/0xrizzmo"
+                  alt="Friend's Twitter"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "https://pbs.twimg.com/profile_images/1934881304996446208/eyNP67zO_400x400.jpg"
+                  }}
+                />
+              </div>
+              <div className="absolute -top-9 left-1/2 transform -translate-x-1/2 bg-black/20 backdrop-blur-xl border border-white/10 text-white text-xs px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                @0xrizzmo
+              </div>
+            </motion.a>
           </div>
-        </motion.div>
+          
+          {/* Documentation Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.4, duration: 0.3, type: "spring" }}
+          >
+            <Documentation />
+          </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   )
 }
+
 
 export default App

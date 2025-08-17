@@ -15,6 +15,13 @@ import { getFormattedOrderPrice } from '../utils/priceUtils'
 import keyStore from '../services/keyStore'
 import { getMarketPrice, calculatePositionSize } from '../utils/hyperliquidPricing'
 
+// Import Glass Icons
+import chartLineIcon from '../glass_icons/chart-line.svg'
+import gaugeIcon from '../glass_icons/gauge.svg'
+import lockIcon from '../glass_icons/lock.svg'
+import trendUpIcon from '../glass_icons/circle-arrow-up.svg'
+import trendDownIcon from '../glass_icons/circle-arrow-down.svg'
+
 // Format open interest with appropriate units
 const formatOpenInterest = (openInterest) => {
   const value = parseFloat(openInterest || 0)
@@ -553,14 +560,14 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
   }
 
   return (
-    <div className="h-full flex flex-col p-2">
+    <div className="h-full flex flex-col p-2" style={{fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
       <motion.div
         key={`card-${currentAssetIndex}-${currentAsset.name}`}
         drag={isDragDisabled ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         onDrag={handleDrag}
         onDragEnd={handleDragEnd}
-        className={`flex-1 glass-card rounded-3xl ${isDragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} min-h-0 overflow-y-auto pr-1`}
+        className={`flex-1 glass-card rounded-3xl ${isDragDisabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'} min-h-0 overflow-y-auto pr-1 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl`}
         initial={{ 
           scale: 0.95, 
           opacity: 0,
@@ -594,11 +601,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
       >
         {/* Price Chart */}
         <div 
-          className="h-60 mb-3 overflow-hidden rounded-t-3xl relative"
+          className="h-60 mb-3 overflow-hidden rounded-t-3xl relative bg-black/20 backdrop-blur-xl border border-white/10"
           style={{ 
             minHeight: '240px',
-            background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.8) 0%, rgba(20, 20, 32, 0.9) 100%)',
-            border: '1px solid rgba(196, 181, 253, 0.1)',
             borderBottom: 'none'
           }}
         >
@@ -607,7 +612,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
           <div 
             className="absolute inset-0 pointer-events-none"
             style={{
-              background: 'linear-gradient(180deg, transparent 0%, transparent 80%, rgba(30, 30, 58, 0.1) 100%)'
+              background: 'linear-gradient(180deg, transparent 0%, transparent 80%, rgba(0, 0, 0, 0.1) 100%)'
             }}
           />
         </div>
@@ -616,7 +621,8 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
         <div className="space-y-3 px-3 pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+              <img src={chartLineIcon} alt="Chart" className="w-5 h-5" />
+              <h2 className="text-2xl font-medium bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
                 {currentAsset.name}/USD
               </h2>
               {/* Live Data Indicator */}
@@ -625,15 +631,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                   initial={{ scale: 0, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
-                  className="flex items-center gap-1.5 px-2 py-1 rounded-full animate-gentle-pulse"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.2) 0%, rgba(52, 211, 153, 0.3) 100%)',
-                    border: '1px solid rgba(134, 239, 172, 0.3)'
-                  }}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full animate-gentle-pulse bg-white/5 border border-white/10 backdrop-blur-sm"
                   title="Live data updating"
                 >
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-green-300 font-medium">LIVE</span>
+                  <span className="text-xs text-green-300 font-normal">LIVE</span>
                 </motion.div>
               )}
             </div>
@@ -642,15 +644,13 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
               initial={{ scale: 1 }}
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 0.3 }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-semibold text-sm ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl font-normal text-sm backdrop-blur-sm ${
                 priceChange >= 0 
-                  ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border border-green-500/30' 
-                  : 'bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 border border-red-500/30'
+                  ? 'bg-white/5 text-green-300 border border-white/10' 
+                  : 'bg-white/5 text-red-300 border border-white/10'
               }`}
             >
-              <span className={`text-xs ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {priceChange >= 0 ? '↗' : '↘'}
-              </span>
+              <img src={priceChange >= 0 ? trendUpIcon : trendDownIcon} alt={priceChange >= 0 ? 'Up' : 'Down'} className="w-3 h-3" />
               <span>
                 {priceChange >= 0 ? '+' : ''}
                 {priceChange}%
@@ -661,31 +661,15 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <motion.div 
-              className="relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300"
-              style={{
-                background: priceFlash[currentAsset.name] 
-                  ? `linear-gradient(135deg, ${
-                      priceFlash[currentAsset.name]?.direction === 'up' 
-                        ? 'rgba(134, 239, 172, 0.1)' 
-                        : 'rgba(253, 164, 175, 0.1)'
-                    } 0%, rgba(30, 30, 58, 0.8) 100%)`
-                  : 'linear-gradient(135deg, rgba(30, 30, 58, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)',
-                border: '1px solid rgba(196, 181, 253, 0.1)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-              }}
+              className="relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ y: -2, scale: 1.02 }}
               animate={priceFlash[currentAsset.name] ? {
-                borderColor: priceFlash[currentAsset.name]?.direction === 'up' ? 'rgba(134, 239, 172, 0.3)' : 'rgba(253, 164, 175, 0.3)'
+                backgroundColor: priceFlash[currentAsset.name]?.direction === 'up' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.08)'
               } : {}}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mb-2">
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    background: 'linear-gradient(135deg, #a78bfa 0%, #c084fc 100%)'
-                  }}
-                ></div>
+              <div className="flex items-center gap-2 text-slate-400 text-xs font-normal mb-2">
+                <div className="w-2 h-2 rounded-full bg-white/40"></div>
                 <span>Market Price</span>
               </div>
               <motion.div 
@@ -697,7 +681,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                     (priceFlash[currentAsset.name]?.direction === 'up' ? '#10b981' : '#ef4444') : '#f8fafc'
                 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
-                className="text-white font-bold text-lg"
+                className="text-white font-medium text-lg"
               >
                 {formatPrice(currentAsset.markPrice)}
               </motion.div>
@@ -708,36 +692,26 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                   initial={{ opacity: 0, scale: 0, y: 5 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0 }}
-                  className={`absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                  className={`absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-xs font-normal bg-white/10 border border-white/20 backdrop-blur-sm ${
                     priceFlash[currentAsset.name]?.direction === 'up' 
-                      ? 'bg-green-400/20 text-green-300' 
-                      : 'bg-red-400/20 text-red-300'
+                      ? 'text-green-300' 
+                      : 'text-red-300'
                   }`}
                 >
-                  {priceFlash[currentAsset.name]?.direction === 'up' ? '↗' : '↘'}
+                  <img src={priceFlash[currentAsset.name]?.direction === 'up' ? trendUpIcon : trendDownIcon} alt="Trend" className="w-3 h-3" />
                 </motion.div>
               )}
             </motion.div>
             
             <motion.div 
-              className="relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300"
-              style={{
-                background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)',
-                border: '1px solid rgba(125, 211, 252, 0.1)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
-              }}
+              className="relative overflow-hidden rounded-xl p-4 cursor-pointer transition-all duration-300 bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ y: -2, scale: 1.02 }}
             >
-              <div className="flex items-center gap-2 text-slate-400 text-xs font-medium mb-2">
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    background: 'linear-gradient(135deg, #7dd3fc 0%, #38bdf8 100%)'
-                  }}
-                ></div>
+              <div className="flex items-center gap-2 text-slate-400 text-xs font-normal mb-2">
+                <div className="w-2 h-2 rounded-full bg-white/40"></div>
                 <span>Open Interest</span>
               </div>
-              <div className="text-white font-bold text-lg">
+              <div className="text-white font-medium text-lg">
                 {formatOpenInterest(currentAsset.openInterest)}
               </div>
             </motion.div>
@@ -749,7 +723,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
               <motion.button
                 onClick={() => handleTrade('buy')}
                 disabled={isPlacingOrder}
-                className="flex-1 gradient-button-success text-white font-semibold py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-green-600/20 hover:bg-green-600/30 border border-green-500/30 hover:border-green-500/50 text-white font-normal py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm"
                 whileHover={!isPlacingOrder ? { scale: 1.02, y: -1 } : {}}
                 whileTap={{ scale: 0.98 }}
               >
@@ -762,7 +736,7 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
               <motion.button
                 onClick={() => handleTrade('sell')}
                 disabled={isPlacingOrder}
-                className="flex-1 gradient-button-danger text-white font-semibold py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 hover:border-red-500/50 text-white font-normal py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm"
                 whileHover={!isPlacingOrder ? { scale: 1.02, y: -1 } : {}}
                 whileTap={{ scale: 0.98 }}
               >
@@ -776,9 +750,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
             {/* Position Size Slider */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-300">Position Size</span>
-                <div className="px-3 py-1 rounded-lg bg-gradient-to-r from-purple-500/20 to-purple-600/20 border border-purple-500/30">
-                  <span className="text-sm font-bold text-purple-300">${positionSize.toFixed(2)} USDC</span>
+                <span className="text-sm font-normal text-slate-300">Position Size</span>
+                <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <span className="text-sm font-normal text-slate-200">${positionSize.toFixed(2)} USDC</span>
                 </div>
               </div>
               
@@ -821,10 +795,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                 />
                 {/* Progress fill */}
                 <div 
-                  className="absolute top-1/2 left-0 h-2 rounded-full pointer-events-none -translate-y-1/2"
+                  className="absolute top-1/2 left-0 h-2 rounded-full pointer-events-none -translate-y-1/2 bg-white/20"
                   style={{
-                    width: `${((positionSize - 10) / (Math.max(10, userBalance) - 10)) * 100}%`,
-                    background: 'linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%)'
+                    width: `${((positionSize - 10) / (Math.max(10, userBalance) - 10)) * 100}%`
                   }}
                 />
               </div>
@@ -838,11 +811,11 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                 <motion.div 
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30"
+                  className="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                 >
-                  <div className="flex items-center gap-2 text-amber-300 text-sm">
+                  <div className="flex items-center gap-2 text-slate-300 text-sm">
                     <span className="text-base">⚠️</span>
-                    <span>Insufficient balance for trading</span>
+                    <span className="font-normal">Insufficient balance for trading</span>
                   </div>
                 </motion.div>
               )}
@@ -851,9 +824,12 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
             {/* Leverage Slider */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-300">Leverage</span>
-                <div className="px-3 py-1 rounded-lg bg-gradient-to-r from-rose-500/20 to-pink-500/20 border border-rose-500/30">
-                  <span className="text-sm font-bold text-rose-300">{leverage}x</span>
+                <div className="flex items-center gap-2">
+                  <img src={gaugeIcon} alt="Leverage" className="w-4 h-4" />
+                  <span className="text-sm font-normal text-slate-300">Leverage</span>
+                </div>
+                <div className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <span className="text-sm font-normal text-slate-200">{leverage}x</span>
                 </div>
               </div>
               
@@ -895,10 +871,9 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
                 />
                 {/* Progress fill */}
                 <div 
-                  className="absolute top-1/2 left-0 h-2 rounded-full pointer-events-none -translate-y-1/2"
+                  className="absolute top-1/2 left-0 h-2 rounded-full pointer-events-none -translate-y-1/2 bg-white/20"
                   style={{
-                    width: `${((leverage - 1) / (currentAsset.maxLeverage - 1)) * 100}%`,
-                    background: 'linear-gradient(135deg, #f43f5e 0%, #ec4899 100%)'
+                    width: `${((leverage - 1) / (currentAsset.maxLeverage - 1)) * 100}%`
                   }}
                 />
               </div>
@@ -914,51 +889,74 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
 
       {/* Private Key Input Modal */}
       {showPrivateKeyInput && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Enter Private Key</h3>
-            <p className="text-gray-300 text-sm mb-4">
-              To use the Python signing service, you need to provide your private key.
-              This is processed securely and not stored.
-            </p>
-            <div className="mb-4">
-              <input
-                type="password"
-                value={privateKey}
-                onChange={(e) => setPrivateKey(e.target.value)}
-                placeholder="0x..."
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowPrivateKeyInput(false)}
-                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (privateKey.trim()) {
-                    keyStore.setPrivateKey(privateKey.trim())
-                    setShowPrivateKeyInput(false)
-                    // Retry the trade with the provided private key
-                    // This will be called automatically by handleTrade
-                  }
-                }}
-                disabled={!privateKey.trim()}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
-              >
-                Continue
-              </button>
-            </div>
-            {!signingServiceAvailable && (
-              <p className="text-red-400 text-sm mt-3">
-                ⚠️ Python signing service not available. Please ensure it's running on localhost:8081
+        <motion.div 
+          className="fixed inset-0 z-50 p-4"
+          style={{
+            background: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(8px)'
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <div className="flex items-center justify-center h-full">
+            <motion.div 
+              className="w-full max-w-md p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <img src={lockIcon} alt="Lock" className="w-6 h-6" />
+                <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Private Key Required</h3>
+              </div>
+              <p className="text-slate-300 text-sm mb-6 font-normal">
+                To use the Python signing service, you need to provide your private key.
+                This is processed securely and not stored.
               </p>
-            )}
+              <div className="space-y-6">
+                <input
+                  type="password"
+                  value={privateKey}
+                  onChange={(e) => setPrivateKey(e.target.value)}
+                  placeholder="0x..."
+                  className="w-full p-4 bg-black/20 text-white rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all duration-300 placeholder-slate-400 font-mono backdrop-blur-sm"
+                />
+                <div className="flex gap-3">
+                  <motion.button
+                    onClick={() => setShowPrivateKeyInput(false)}
+                    className="flex-1 px-4 py-3 rounded-xl text-sm font-normal text-white bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      if (privateKey.trim()) {
+                        keyStore.setPrivateKey(privateKey.trim())
+                        setShowPrivateKeyInput(false)
+                        // Retry the trade with the provided private key
+                        // This will be called automatically by handleTrade
+                      }
+                    }}
+                    disabled={!privateKey.trim()}
+                    className="flex-1 bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white px-4 py-3 rounded-xl text-sm font-normal disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm"
+                    whileHover={privateKey.trim() ? { scale: 1.02, y: -1 } : {}}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Continue
+                  </motion.button>
+                </div>
+                {!signingServiceAvailable && (
+                  <p className="text-slate-300 text-sm p-3 bg-black/20 border border-white/10 rounded-xl font-normal">
+                    ⚠️ Python signing service not available. Please ensure it's running on localhost:8081
+                  </p>
+                )}
+              </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   )

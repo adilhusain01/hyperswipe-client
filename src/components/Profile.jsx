@@ -7,29 +7,35 @@ import websocketService from '../services/websocket'
 import telegramService from '../services/telegramService'
 import { ProfileSkeleton } from './LoadingSkeleton'
 
+// Import Glass Icons
+import userIcon from '../glass_icons/user.svg'
+import walletContentIcon from '../glass_icons/wallet-content.svg'
+import moneyBillIcon from '../glass_icons/money-bill.svg'
+import bellIcon from '../glass_icons/bell.svg'
+import connectIcon from '../glass_icons/connect.svg'
+import clipboardCheckIcon from '../glass_icons/clipboard-check.svg'
+
 const CopyIcon = ({ onClick, copied }) => (
   <motion.button
     onClick={onClick}
-    className={`ml-3 p-2 rounded-lg transition-all duration-300 ${
+    className={`ml-3 p-2 rounded-lg transition-all duration-300 backdrop-blur-sm ${
       copied 
-        ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-        : 'bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 hover:scale-105'
+        ? 'bg-white/10 text-white border border-white/20' 
+        : 'bg-black/20 text-slate-300 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
     }`}
     title={copied ? "Copied!" : "Copy address"}
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
   >
     {copied ? (
-      <motion.svg 
-        className="w-4 h-4" 
-        fill="currentColor" 
-        viewBox="0 0 24 24"
+      <motion.img 
+        src={clipboardCheckIcon}
+        alt="Copied"
+        className="w-4 h-4"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 500 }}
-      >
-        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-      </motion.svg>
+      />
     ) : (
       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
         <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
@@ -261,9 +267,7 @@ const Profile = ({ user }) => {
   const marginSummary = userState?.marginSummary || {}
 
   return (
-    <div className="h-full overflow-y-auto" style={{
-      background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)'
-    }}>
+    <div className="h-full overflow-y-auto bg-black/10" style={{fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
       <motion.div 
         className="p-4 space-y-6 pb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -272,28 +276,20 @@ const Profile = ({ user }) => {
       >
         {/* User Info */}
         <motion.div 
-          className="glass-card rounded-3xl p-6"
+          className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
           whileHover={{ y: -2 }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{
-                background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
-              }}
-            ></div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-slate-100 to-slate-300 bg-clip-text text-transparent">
+            <img src={userIcon} alt="Profile" className="w-6 h-6" />
+            <h2 className="text-xl font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
               Profile
             </h2>
           </div>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 rounded-xl" style={{
-              background: 'linear-gradient(135deg, rgba(196, 181, 253, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
-              border: '1px solid rgba(196, 181, 253, 0.1)'
-            }}>
-              <span className="text-slate-300 font-medium text-sm">Wallet Address</span>
+            <div className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/10">
+              <span className="text-slate-300 font-normal text-sm">Wallet Address</span>
               <div className="flex items-center">
-                <span className="text-purple-200 font-mono text-sm bg-purple-500/10 px-3 py-1 rounded-lg">
+                <span className="text-slate-200 font-mono text-sm bg-black/20 px-3 py-1 rounded-lg backdrop-blur-sm border border-white/10">
                   {user?.wallet?.address ? 
                     `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}` : 
                     'Not connected'
@@ -304,36 +300,28 @@ const Profile = ({ user }) => {
                 )}
               </div>
             </div>
-            <div className="flex justify-between items-center p-3 rounded-xl" style={{
-              background: 'linear-gradient(135deg, rgba(253, 164, 175, 0.05) 0%, rgba(244, 63, 94, 0.05) 100%)',
-              border: '1px solid rgba(253, 164, 175, 0.1)'
-            }}>
-              <span className="text-slate-300 font-medium text-sm">Email</span>
-              <span className="text-rose-200 text-sm">{user?.email?.address || 'Not provided'}</span>
+            <div className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/10">
+              <span className="text-slate-300 font-normal text-sm">Email</span>
+              <span className="text-slate-200 text-sm font-normal">{user?.email?.address || 'Not provided'}</span>
             </div>
           </div>
         </motion.div>
 
         {/* Hyperliquid Account Summary */}
         <motion.div 
-          className="glass-card rounded-3xl p-6"
+          className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
           whileHover={{ y: -2 }}
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{
-                  background: 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
-                }}
-              ></div>
-              <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-200 to-green-300 bg-clip-text text-transparent">
+              <img src={walletContentIcon} alt="Wallet" className="w-6 h-6" />
+              <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
                 Hyperliquid Account
               </h3>
             </div>
             {!perpAccountExists && (
               <motion.span 
-                className="text-xs bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 px-3 py-1.5 rounded-lg border border-amber-500/30"
+                className="text-xs bg-black/20 text-slate-300 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm"
                 animate={{ pulse: [1, 1.05, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
@@ -343,49 +331,37 @@ const Profile = ({ user }) => {
           </div>
           <div className="grid grid-cols-1 gap-4">
             <motion.div 
-              className="relative overflow-hidden rounded-2xl p-6"
-              style={{
-                background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
-                border: '1px solid rgba(134, 239, 172, 0.2)'
-              }}
+              className="relative overflow-hidden rounded-xl p-6 bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
             >
-              <div className="text-emerald-300 text-sm font-medium mb-2">Total Account Value</div>
-              <div className="text-white text-2xl font-bold">
+              <div className="text-slate-300 text-sm font-normal mb-2">Total Account Value</div>
+              <div className="text-white text-2xl font-medium">
                 ${parseFloat(marginSummary.accountValue || 0).toLocaleString()}
               </div>
-              <div className="absolute top-4 right-4 w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <div className="absolute top-4 right-4 w-2 h-2 bg-white/40 rounded-full animate-pulse"></div>
             </motion.div>
             
             <div className="grid grid-cols-2 gap-4">
               <motion.div 
-                className="relative overflow-hidden rounded-xl p-4"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
-                  border: '1px solid rgba(253, 164, 175, 0.2)'
-                }}
+                className="relative overflow-hidden rounded-xl p-4 bg-white/5 border border-white/10 backdrop-blur-sm"
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="text-rose-300 text-sm font-medium mb-2">Margin Used</div>
-                <div className="text-white font-bold text-lg">
+                <div className="text-slate-300 text-sm font-normal mb-2">Margin Used</div>
+                <div className="text-white font-medium text-lg">
                   ${parseFloat(marginSummary.totalMarginUsed || 0).toLocaleString()}
                 </div>
               </motion.div>
               
               <motion.div 
-                className="relative overflow-hidden rounded-xl p-4"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(196, 181, 253, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                  border: '1px solid rgba(196, 181, 253, 0.2)'
-                }}
+                className="relative overflow-hidden rounded-xl p-4 bg-white/5 border border-white/10 backdrop-blur-sm"
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="text-purple-300 text-sm font-medium mb-2">Available</div>
-                <div className="text-white font-bold text-lg">
+                <div className="text-slate-300 text-sm font-normal mb-2">Available</div>
+                <div className="text-white font-medium text-lg">
                   ${parseFloat(userState?.withdrawable || marginSummary?.accountValue || 0).toLocaleString()}
                 </div>
                 {parseFloat(userState?.withdrawable || 0) === 0 && parseFloat(marginSummary?.accountValue || 0) > 0 && (
-                  <div className="text-xs text-amber-300 mt-2 px-2 py-1 bg-amber-500/10 rounded-lg">
+                  <div className="text-xs text-slate-300 mt-2 px-2 py-1 bg-black/20 rounded-lg border border-white/10 font-normal">
                     May be in positions
                   </div>
                 )}
@@ -397,13 +373,9 @@ const Profile = ({ user }) => {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 p-4 rounded-2xl"
-              style={{
-                background: 'linear-gradient(135deg, rgba(252, 211, 77, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%)',
-                border: '1px solid rgba(252, 211, 77, 0.2)'
-              }}
+              className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10"
             >
-              <div className="text-amber-200 text-sm flex items-start gap-3">
+              <div className="text-slate-300 text-sm flex items-start gap-3 font-normal">
                 <span className="text-lg">💡</span>
                 <div>
                   <div className="font-medium mb-1">Account Creation</div>
@@ -419,13 +391,9 @@ const Profile = ({ user }) => {
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-6 p-4 rounded-2xl"
-              style={{
-                background: 'linear-gradient(135deg, rgba(125, 211, 252, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
-                border: '1px solid rgba(125, 211, 252, 0.2)'
-              }}
+              className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10"
             >
-              <div className="text-sky-200 text-sm flex items-start gap-3">
+              <div className="text-slate-300 text-sm flex items-start gap-3 font-normal">
                 <span className="text-lg">ℹ️</span>
                 <div>
                   <div className="font-medium mb-1">Balance Location</div>
@@ -440,44 +408,35 @@ const Profile = ({ user }) => {
 
         {/* Wallet Balance (Arbitrum Sepolia) */}
         <motion.div 
-          className="glass-card rounded-3xl p-6"
+          className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
           whileHover={{ y: -2 }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{
-                background: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)'
-              }}
-            ></div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-sky-200 to-blue-300 bg-clip-text text-transparent">
+            <img src={moneyBillIcon} alt="Money" className="w-6 h-6" />
+            <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
               Arbitrum Sepolia Balance
             </h3>
           </div>
           
           <motion.div 
-            className="relative overflow-hidden rounded-2xl p-6 mb-6"
-            style={{
-              background: 'linear-gradient(135deg, rgba(125, 211, 252, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
-              border: '1px solid rgba(125, 211, 252, 0.2)'
-            }}
+            className="relative overflow-hidden rounded-xl p-6 mb-6 bg-white/5 border border-white/10 backdrop-blur-sm"
             whileHover={{ scale: 1.02 }}
           >
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-sky-300 text-sm font-medium mb-2">USDC Balance</div>
-                <div className="text-white text-2xl font-bold">
+                <div className="text-slate-300 text-sm font-normal mb-2">USDC Balance</div>
+                <div className="text-white text-2xl font-medium">
                   ${walletUSDCBalance.toFixed(2)}
                 </div>
-                <div className="text-sky-200 text-sm opacity-80">USDC</div>
+                <div className="text-slate-200 text-sm opacity-80 font-normal">USDC</div>
                 {walletUSDCBalance === 0 && (
-                  <div className="text-xs text-sky-400 mt-2 px-2 py-1 bg-sky-500/10 rounded-lg inline-block">
+                  <div className="text-xs text-slate-300 mt-2 px-2 py-1 bg-black/20 rounded-lg inline-block border border-white/10 font-normal">
                     Using mock USDC for testnet
                   </div>
                 )}
               </div>
               <motion.div 
-                className="text-sky-400"
+                className="text-slate-400"
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
               >
@@ -491,20 +450,20 @@ const Profile = ({ user }) => {
           {/* Transfer to Perp Account */}
           <div className="space-y-4">
             <div>
-              <label className="text-slate-300 text-sm font-medium mb-3 block">Transfer to Hyperliquid</label>
+              <label className="text-slate-300 text-sm font-normal mb-3 block">Transfer to Hyperliquid</label>
               <div className="flex gap-3">
                 <input
                   type="number"
                   placeholder="Amount USDC"
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
-                  className="flex-1 bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-3 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400"
+                  className="flex-1 bg-black/20 text-white px-4 py-3 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all duration-300 placeholder-slate-400 backdrop-blur-sm font-normal"
                   disabled={isTransferring}
                 />
                 <motion.button
                   onClick={handleTransferToPerp}
                   disabled={isTransferring || !transferAmount}
-                  className="gradient-button-primary text-white px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white px-6 py-3 rounded-xl text-sm font-normal disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm"
                   whileHover={!isTransferring && transferAmount ? { scale: 1.02, y: -1 } : {}}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -522,12 +481,12 @@ const Profile = ({ user }) => {
                 <motion.div 
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-red-300 text-sm mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl"
+                  className="text-slate-300 text-sm mt-3 p-3 bg-black/20 border border-white/10 rounded-xl font-normal"
                 >
                   {transferError}
                 </motion.div>
               )}
-              <div className="text-slate-400 text-xs mt-3 flex justify-between">
+              <div className="text-slate-400 text-xs mt-3 flex justify-between font-normal">
                 <span>Min: $10 USDC</span>
                 <span>Max: ${walletUSDCBalance.toFixed(2)} USDC</span>
               </div>
@@ -537,25 +496,18 @@ const Profile = ({ user }) => {
 
         {/* Telegram Notifications */}
         <motion.div 
-          className="glass-card rounded-3xl p-6"
+          className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
           whileHover={{ y: -2 }}
         >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{
-                  background: telegramStatus.linked 
-                    ? 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
-                    : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
-                }}
-              ></div>
-              <h3 className="text-lg font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent">
+              <img src={bellIcon} alt="Notifications" className="w-6 h-6" />
+              <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
                 Telegram
               </h3>
             </div>
             {telegramStatus.linked && (
-              <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-lg border border-green-500/30">
+              <div className="text-xs bg-white/10 text-white px-2 py-1 rounded-lg border border-white/20 backdrop-blur-sm font-normal">
                 ✓ Connected
               </div>
             )}
@@ -563,18 +515,18 @@ const Profile = ({ user }) => {
           
           {telegramStatus.loading ? (
             <div className="text-center py-4">
-              <div className="w-6 h-6 border-2 border-blue-300/30 border-t-blue-300 rounded-full animate-spin mx-auto"></div>
-              <div className="text-slate-400 text-sm mt-2">Checking status...</div>
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto"></div>
+              <div className="text-slate-400 text-sm mt-2 font-normal">Checking status...</div>
             </div>
           ) : telegramStatus.linked ? (
             // Linked State
             <div className="space-y-4">
               <motion.div 
-                className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
+                className="p-4 rounded-xl bg-white/5 border border-white/10"
                 whileHover={{ scale: 1.01 }}
               >
-                <div className="text-green-300 text-sm font-medium mb-2">🎉 Connected</div>
-                <div className="text-slate-400 text-xs">
+                <div className="text-slate-200 text-sm font-normal mb-2">🎉 Connected</div>
+                <div className="text-slate-400 text-xs font-normal">
                   • Order fills & executions • Daily portfolio summaries
                 </div>
               </motion.div>
@@ -582,7 +534,7 @@ const Profile = ({ user }) => {
               <div className="flex gap-3">
                 <motion.button
                   onClick={handleTestNotification}
-                  className="flex-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 px-4 py-2.5 rounded-xl text-sm font-semibold border border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-300"
+                  className="flex-1 bg-black/20 hover:bg-white/10 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-normal border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -590,7 +542,7 @@ const Profile = ({ user }) => {
                 </motion.button>
                 <motion.button
                   onClick={handleUnlinkTelegram}
-                  className="bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 px-4 py-2.5 rounded-xl text-sm font-semibold border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 transition-all duration-300"
+                  className="bg-black/20 hover:bg-white/10 text-slate-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-normal border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -602,11 +554,11 @@ const Profile = ({ user }) => {
             // Not Linked State
             <div className="space-y-4">
               <motion.div 
-                className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20"
+                className="p-4 rounded-xl bg-white/5 border border-white/10"
                 whileHover={{ scale: 1.01 }}
               >
-                <div className="text-blue-300 text-sm font-medium mb-2">Get Trading Alerts</div>
-                <div className="text-slate-400 text-xs">
+                <div className="text-slate-200 text-sm font-normal mb-2">Get Trading Alerts</div>
+                <div className="text-slate-400 text-xs font-normal">
                   Real-time notifications for fills and portfolio updates
                 </div>
               </motion.div>
@@ -614,7 +566,7 @@ const Profile = ({ user }) => {
               {!showTelegramSetup ? (
                 <motion.button
                   onClick={() => setShowTelegramSetup(true)}
-                  className="w-full gradient-button-primary text-white py-3 px-4 rounded-xl text-sm font-semibold"
+                  className="w-full bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-3 px-4 rounded-xl text-sm font-normal transition-all duration-300 backdrop-blur-sm"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -622,9 +574,9 @@ const Profile = ({ user }) => {
                 </motion.button>
               ) : (
                 <div className="space-y-3">
-                  <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-                    <div className="text-purple-300 text-sm font-medium mb-2">Setup:</div>
-                    <div className="space-y-1 text-xs text-slate-300">
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                    <div className="text-slate-200 text-sm font-normal mb-2">Setup:</div>
+                    <div className="space-y-1 text-xs text-slate-300 font-normal">
                       <div>1. Open bot → 2. Send /start → 3. Copy Chat ID → 4. Paste below</div>
                     </div>
                   </div>
@@ -633,7 +585,7 @@ const Profile = ({ user }) => {
                     href={telegramService.generateBotLink()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2.5 px-4 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300"
+                    className="block w-full bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white text-center py-2.5 px-4 rounded-xl text-sm font-normal transition-all duration-300 backdrop-blur-sm"
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -646,13 +598,13 @@ const Profile = ({ user }) => {
                       placeholder="Chat ID (e.g., 123456789)"
                       value={telegramChatId}
                       onChange={(e) => setTelegramChatId(e.target.value)}
-                      className="w-full bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-2.5 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400 font-mono text-sm"
+                      className="w-full bg-black/20 text-white px-4 py-2.5 rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all duration-300 placeholder-slate-400 font-mono text-sm backdrop-blur-sm"
                       disabled={telegramLinking}
                     />
                     <div className="flex gap-3">
                       <motion.button
                         onClick={() => setShowTelegramSetup(false)}
-                        className="flex-1 bg-gradient-to-r from-slate-600/50 to-slate-500/50 text-slate-300 py-2.5 px-4 rounded-xl text-sm font-semibold border border-slate-600/30 hover:from-slate-600/70 hover:to-slate-500/70 transition-all duration-300"
+                        className="flex-1 bg-black/20 hover:bg-white/10 text-slate-300 hover:text-white py-2.5 px-4 rounded-xl text-sm font-normal border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
                         whileHover={{ scale: 1.02, y: -1 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -661,7 +613,7 @@ const Profile = ({ user }) => {
                       <motion.button
                         onClick={handleLinkTelegram}
                         disabled={telegramLinking || !telegramChatId.trim()}
-                        className="flex-1 gradient-button-primary text-white py-2.5 px-4 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-2.5 px-4 rounded-xl text-sm font-normal disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm"
                         whileHover={!telegramLinking && telegramChatId.trim() ? { scale: 1.02, y: -1 } : {}}
                         whileTap={{ scale: 0.98 }}
                       >

@@ -157,23 +157,23 @@ const Chart = ({ asset, className = '' }) => {
         width: chartContainerRef.current.clientWidth,
         height: chartContainerRef.current.clientHeight,
         layout: {
-          background: { color: '#1f2937' }, // Gray-800
-          textColor: '#d1d5db', // Gray-300
+          background: { color: 'rgba(0, 0, 0, 0.2)' }, // Glass background
+          textColor: 'rgba(255, 255, 255, 0.8)', // Light text
         },
         grid: {
-          vertLines: { color: '#374151' }, // Gray-700
-          horzLines: { color: '#374151' }, // Gray-700
+          vertLines: { color: 'rgba(255, 255, 255, 0.1)' }, // Glass grid lines
+          horzLines: { color: 'rgba(255, 255, 255, 0.1)' }, // Glass grid lines
         },
         crosshair: {
           mode: CrosshairMode.Normal,
         },
         timeScale: {
-          borderColor: '#4b5563', // Gray-600
+          borderColor: 'rgba(255, 255, 255, 0.1)', // Glass border
           timeVisible: true,
           secondsVisible: false,
         },
         rightPriceScale: {
-          borderColor: '#4b5563', // Gray-600
+          borderColor: 'rgba(255, 255, 255, 0.1)', // Glass border
           scaleMargins: {
             top: 0.1,
             bottom: 0.2, // Leave space for volume
@@ -196,7 +196,7 @@ const Chart = ({ asset, className = '' }) => {
 
       // Add volume series using the correct API
       volumeSeries.current = chart.current.addSeries(HistogramSeries, {
-        color: '#6b7280', // Gray-500
+        color: 'rgba(255, 255, 255, 0.3)', // Glass volume color
         priceFormat: {
           type: 'volume',
         },
@@ -217,7 +217,7 @@ const Chart = ({ asset, className = '' }) => {
         chartData.map(d => ({
           time: d.time,
           value: d.volume,
-          color: d.close >= d.open ? '#10b98150' : '#ef444450' // Transparent colors
+          color: d.close >= d.open ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)' // Glass volume colors
         }))
       )
 
@@ -318,7 +318,7 @@ const Chart = ({ asset, className = '' }) => {
             volumeSeries.current.update({
               time: candleStartTime,
               value: 0,
-              color: '#6b728050'
+              color: 'rgba(255, 255, 255, 0.2)'
             })
             
             // Keep only recent candles
@@ -351,23 +351,23 @@ const Chart = ({ asset, className = '' }) => {
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} style={{fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-lg z-10">
-          <div className="text-gray-300 text-sm">Loading chart...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-xl rounded-lg z-10">
+          <div className="text-slate-200 text-sm font-normal">Loading chart...</div>
         </div>
       )}
     
 
       {/* Timeframe Dropdown */}
-      <div className="absolute top-2 left-2 z-20">
+      <div className="absolute top-2 left-2 z-20" style={{fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
         <select
           value={selectedTimeframe}
           onChange={(e) => setSelectedTimeframe(e.target.value)}
-          className="bg-gray-800 bg-opacity-90 text-gray-300 text-xs px-3 py-1.5 rounded border border-gray-600 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 hover:bg-gray-700 transition-colors cursor-pointer min-w-[80px]"
+          className="bg-black/20 backdrop-blur-xl text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 hover:bg-white/10 transition-all duration-300 cursor-pointer min-w-[80px] font-normal"
         >
           {timeframes.map((tf) => (
-            <option key={tf.label} value={tf.label} className="bg-gray-800 text-gray-300">
+            <option key={tf.label} value={tf.label} className="bg-black/90 text-slate-200 font-normal">
               {tf.label}
             </option>
           ))}

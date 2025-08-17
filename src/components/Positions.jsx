@@ -8,6 +8,14 @@ import websocketService from '../services/websocket'
 import keyStore from '../services/keyStore'
 import { getMarketPrice, formatHyperliquidSize } from '../utils/hyperliquidPricing'
 
+// Import Glass Icons
+import clipboardCheckIcon from '../glass_icons/clipboard-check.svg'
+import layersIcon from '../glass_icons/layers.svg'
+import squareChartLineIcon from '../glass_icons/square-chart-line.svg'
+import moneyBillIcon from '../glass_icons/money-bill.svg'
+import gaugeIcon from '../glass_icons/gauge.svg'
+import lockIcon from '../glass_icons/lock.svg'
+
 const Positions = ({ user }) => {
   const { wallets } = useWallets()
   const [userState, setUserState] = useState(null)
@@ -347,9 +355,7 @@ const Positions = ({ user }) => {
   const totalMarginUsed = parseFloat(marginSummary?.totalMarginUsed || 0)
 
   return (
-    <div className="h-full overflow-y-auto" style={{
-      background: 'linear-gradient(135deg, rgba(10, 10, 15, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)'
-    }}>
+    <div className="h-full overflow-y-auto bg-black/10" style={{fontFamily: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'}}>
       <motion.div 
         className="p-4 space-y-6 pb-20"
         initial={{ opacity: 0, y: 20 }}
@@ -358,58 +364,29 @@ const Positions = ({ user }) => {
       >
         {/* Header with Account Summary */}
         <motion.div 
-          className="glass-card rounded-3xl p-6"
+          className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
           whileHover={{ y: -2 }}
         >
           <div className="flex items-center gap-3 mb-6">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{
-                background: 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
-              }}
-            ></div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-200 to-green-300 bg-clip-text text-transparent">Active Positions</h2>
+            <img src={clipboardCheckIcon} alt="Positions" className="w-6 h-6" />
+            <h2 className="text-xl font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Active Positions</h2>
           </div>
           <div className="grid grid-cols-3 gap-3 text-sm">
             <motion.div 
-              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center"
-              style={{
-                background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
-                border: '1px solid rgba(134, 239, 172, 0.2)'
-              }}
+              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
             >
-              <div className="text-emerald-300 text-xs font-medium mb-1">Portfolio Value</div>
-              <div className="text-white font-bold text-sm leading-tight break-all">
+              <div className="text-slate-300 text-xs font-normal mb-1">Portfolio Value</div>
+              <div className="text-white font-medium text-sm leading-tight break-all">
                 ${accountValue.toFixed(2)}
               </div>
             </motion.div>
             <motion.div 
-              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center"
-              style={{
-                background: positions.reduce((sum, pos) => {
-                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
-                  return sum + (isNaN(pnl) ? 0 : pnl)
-                }, 0) >= 0 
-                  ? 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)'
-                  : 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
-                border: positions.reduce((sum, pos) => {
-                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
-                  return sum + (isNaN(pnl) ? 0 : pnl)
-                }, 0) >= 0 
-                  ? '1px solid rgba(134, 239, 172, 0.2)'
-                  : '1px solid rgba(253, 164, 175, 0.2)'
-              }}
+              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
             >
-              <div className={`text-xs font-medium mb-1 ${
-                positions.reduce((sum, pos) => {
-                  const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
-                  return sum + (isNaN(pnl) ? 0 : pnl)
-                }, 0) >= 0 
-                ? 'text-emerald-300' : 'text-rose-300'
-              }`}>Total PnL</div>
-              <div className={`font-bold text-sm leading-tight break-all ${
+              <div className="text-slate-300 text-xs font-normal mb-1">Total PnL</div>
+              <div className={`font-medium text-sm leading-tight break-all ${
                 positions.reduce((sum, pos) => {
                   const pnl = parseFloat(pos?.position?.unrealizedPnl || 0)
                   return sum + (isNaN(pnl) ? 0 : pnl)
@@ -423,15 +400,11 @@ const Positions = ({ user }) => {
               </div>
             </motion.div>
             <motion.div 
-              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center"
-              style={{
-                background: 'linear-gradient(135deg, rgba(196, 181, 253, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                border: '1px solid rgba(196, 181, 253, 0.2)'
-              }}
+              className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
             >
-              <div className="text-purple-300 text-xs font-medium mb-1">Positions</div>
-              <div className="text-white font-bold text-sm leading-tight">{positions.length}</div>
+              <div className="text-slate-300 text-xs font-normal mb-1">Positions</div>
+              <div className="text-white font-medium text-sm leading-tight">{positions.length}</div>
             </motion.div>
           </div>
         </motion.div>
@@ -439,27 +412,18 @@ const Positions = ({ user }) => {
         {/* Open Orders */}
         {openOrders.length > 0 && (
           <motion.div 
-            className="glass-card rounded-3xl p-6"
+            className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
             whileHover={{ y: -2 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{
-                  background: 'linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%)'
-                }}
-              ></div>
-              <h3 className="text-lg font-bold bg-gradient-to-r from-sky-200 to-blue-300 bg-clip-text text-transparent">Open Orders ({openOrders.length})</h3>
+              <img src={layersIcon} alt="Orders" className="w-6 h-6" />
+              <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Open Orders ({openOrders.length})</h3>
             </div>
             <div className="space-y-3">
               {openOrders.slice(0, 3).map((order, index) => (
                 <motion.div 
                   key={order.oid || index} 
-                  className="p-4 rounded-2xl" 
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.6) 0%, rgba(20, 20, 32, 0.8) 100%)',
-                    border: '1px solid rgba(196, 181, 253, 0.1)'
-                  }}
+                  className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm" 
                   whileHover={{ scale: 1.01, y: -1 }}
                 >
                   <div className="flex justify-between items-center">
@@ -476,11 +440,7 @@ const Positions = ({ user }) => {
                       {(!order.status || order.status === 'open' || order.status === 'pending') && (
                         <motion.button 
                           onClick={() => cancelOrder(order)}
-                          className="text-xs px-3 py-1.5 rounded-lg mt-2 font-medium transition-colors text-white"
-                          style={{
-                            background: 'linear-gradient(135deg, rgba(244, 63, 94, 0.8) 0%, rgba(220, 38, 127, 0.8) 100%)',
-                            border: '1px solid rgba(244, 63, 94, 0.3)'
-                          }}
+                          className="text-xs px-3 py-1.5 rounded-lg mt-2 font-normal transition-colors text-white bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 backdrop-blur-sm"
                           whileHover={{ scale: 1.05, y: -1 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -501,11 +461,7 @@ const Positions = ({ user }) => {
               ))}
               {openOrders.length > 3 && (
                 <motion.div 
-                  className="text-center text-slate-400 text-sm p-3 rounded-xl"
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.4) 0%, rgba(20, 20, 32, 0.6) 100%)',
-                    border: '1px solid rgba(196, 181, 253, 0.05)'
-                  }}
+                  className="text-center text-slate-400 text-sm p-3 rounded-xl bg-white/5 border border-white/10 font-normal"
                 >
                   +{openOrders.length - 3} more orders
                 </motion.div>
@@ -537,7 +493,7 @@ const Positions = ({ user }) => {
               return (
                 <motion.div 
                   key={index} 
-                  className="glass-card rounded-3xl p-6"
+                  className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -547,14 +503,14 @@ const Positions = ({ user }) => {
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-3">
                       <div>
-                        <div className="text-white font-semibold text-lg">{coin}</div>
-                        <div className={`text-sm font-medium ${positionSide.color}`}>
+                        <div className="text-white font-medium text-lg">{coin}</div>
+                        <div className={`text-sm font-normal ${positionSide.color}`}>
                           {positionSide.side} {leverage}x
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-lg font-bold ${pnl.isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                      <div className={`text-lg font-medium ${pnl.isPositive ? 'text-green-400' : 'text-red-400'}`}>
                         {pnl.value}
                       </div>
                       <div className={`text-sm ${priceChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -566,48 +522,32 @@ const Positions = ({ user }) => {
                   {/* Position Details Grid */}
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <motion.div 
-                      className="p-4 rounded-xl"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(196, 181, 253, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
-                        border: '1px solid rgba(196, 181, 253, 0.2)'
-                      }}
+                      className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                       whileHover={{ scale: 1.02 }}
                     >
-                      <div className="text-purple-300 text-xs mb-2 font-medium">Position Size</div>
-                      <div className="text-white font-bold text-lg">{Math.abs(parseFloat(szi)).toFixed(4)}</div>
+                      <div className="text-slate-300 text-xs mb-2 font-normal">Position Size</div>
+                      <div className="text-white font-medium text-lg">{Math.abs(parseFloat(szi)).toFixed(4)}</div>
                     </motion.div>
                     <motion.div 
-                      className="p-4 rounded-xl"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(125, 211, 252, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%)',
-                        border: '1px solid rgba(125, 211, 252, 0.2)'
-                      }}
+                      className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                       whileHover={{ scale: 1.02 }}
                     >
-                      <div className="text-sky-300 text-xs mb-2 font-medium">Entry Price</div>
-                      <div className="text-white font-bold text-lg">{formatPrice(entryPx)}</div>
+                      <div className="text-slate-300 text-xs mb-2 font-normal">Entry Price</div>
+                      <div className="text-white font-medium text-lg">{formatPrice(entryPx)}</div>
                     </motion.div>
                     <motion.div 
-                      className="p-4 rounded-xl"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
-                        border: '1px solid rgba(134, 239, 172, 0.2)'
-                      }}
+                      className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                       whileHover={{ scale: 1.02 }}
                     >
-                      <div className="text-emerald-300 text-xs mb-2 font-medium">Mark Price</div>
-                      <div className="text-white font-bold text-lg">{formatPrice(currentPrice)}</div>
+                      <div className="text-slate-300 text-xs mb-2 font-normal">Mark Price</div>
+                      <div className="text-white font-medium text-lg">{formatPrice(currentPrice)}</div>
                     </motion.div>
                     <motion.div 
-                      className="p-4 rounded-xl"
-                      style={{
-                        background: 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
-                        border: '1px solid rgba(253, 164, 175, 0.2)'
-                      }}
+                      className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                       whileHover={{ scale: 1.02 }}
                     >
-                      <div className="text-rose-300 text-xs mb-2 font-medium">Margin Used</div>
-                      <div className="text-white font-bold text-lg">
+                      <div className="text-slate-300 text-xs mb-2 font-normal">Margin Used</div>
+                      <div className="text-white font-medium text-lg">
                         ${parseFloat(marginUsed).toFixed(2)}
                       </div>
                     </motion.div>
@@ -623,13 +563,7 @@ const Positions = ({ user }) => {
                         markPrice: currentPrice.toString()
                       })}
                       disabled={closingPosition === coin}
-                      className="flex-1 py-3 px-4 rounded-xl text-sm font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                      style={{
-                        background: closingPosition === coin 
-                          ? 'linear-gradient(135deg, rgba(100, 116, 139, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%)'
-                          : 'linear-gradient(135deg, rgba(244, 63, 94, 0.8) 0%, rgba(220, 38, 127, 0.8) 100%)',
-                        border: '1px solid rgba(244, 63, 94, 0.3)'
-                      }}
+                      className="flex-1 py-3 px-4 rounded-xl text-sm font-normal text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 backdrop-blur-sm"
                       whileHover={!closingPosition ? { scale: 1.02, y: -1 } : {}}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -643,7 +577,7 @@ const Positions = ({ user }) => {
                       )}
                     </motion.button>
                     <motion.button 
-                      className="flex-1 gradient-button-secondary text-white py-3 px-4 rounded-xl text-sm font-semibold"
+                      className="flex-1 bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white py-3 px-4 rounded-xl text-sm font-normal transition-all duration-300 backdrop-blur-sm"
                       whileHover={{ scale: 1.02, y: -1 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -661,42 +595,29 @@ const Positions = ({ user }) => {
         {/* Risk Management Info */}
         {positions.length > 0 && (
           <motion.div 
-            className="glass-card rounded-3xl p-6"
+            className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
             whileHover={{ y: -2 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{
-                  background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
-                }}
-              ></div>
-              <h3 className="text-lg font-bold bg-gradient-to-r from-pink-200 to-rose-300 bg-clip-text text-transparent">Risk Management</h3>
+              <img src={gaugeIcon} alt="Risk" className="w-6 h-6" />
+              <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Risk Management</h3>
             </div>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <motion.div 
-                className="p-4 rounded-xl"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(134, 239, 172, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%)',
-                  border: '1px solid rgba(134, 239, 172, 0.2)'
-                }}
+                className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="text-emerald-300 text-xs mb-2 font-medium">Available Balance</div>
-                <div className="text-white font-bold text-lg">
+                <div className="text-slate-300 text-xs mb-2 font-normal">Available Balance</div>
+                <div className="text-white font-medium text-lg">
                   ${withdrawableBalance.toFixed(2)}
                 </div>
               </motion.div>
               <motion.div 
-                className="p-4 rounded-xl"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(253, 164, 175, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
-                  border: '1px solid rgba(253, 164, 175, 0.2)'
-                }}
+                className="p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
                 whileHover={{ scale: 1.02 }}
               >
-                <div className="text-rose-300 text-xs mb-2 font-medium">Margin Usage</div>
-                <div className="text-white font-bold text-lg">
+                <div className="text-slate-300 text-xs mb-2 font-normal">Margin Usage</div>
+                <div className="text-white font-medium text-lg">
                   ${totalMarginUsed.toFixed(2)}
                 </div>
               </motion.div>
@@ -719,26 +640,16 @@ const Positions = ({ user }) => {
         >
           <div className="flex items-center justify-center h-full">
             <motion.div 
-              className="w-full max-w-md p-6 rounded-3xl"
-              style={{
-                background: 'linear-gradient(135deg, rgba(30, 30, 58, 0.95) 0%, rgba(20, 20, 32, 0.98) 100%)',
-                border: '1px solid rgba(196, 181, 253, 0.2)',
-                backdropFilter: 'blur(20px)'
-              }}
+              className="w-full max-w-md p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
             >
               <div className="flex items-center gap-3 mb-6">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{
-                    background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
-                  }}
-                ></div>
-                <h3 className="text-lg font-bold bg-gradient-to-r from-pink-200 to-rose-300 bg-clip-text text-transparent">Private Key Required</h3>
+                <img src={lockIcon} alt="Lock" className="w-6 h-6" />
+                <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Private Key Required</h3>
               </div>
-              <p className="text-slate-300 text-sm mb-6">
+              <p className="text-slate-300 text-sm mb-6 font-normal">
                 Enter your private key to sign the close position transaction
               </p>
               <div className="space-y-6">
@@ -747,7 +658,7 @@ const Positions = ({ user }) => {
                   value={privateKey}
                   onChange={(e) => setPrivateKey(e.target.value)}
                   placeholder="0x..."
-                  className="w-full p-4 bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400 font-mono"
+                  className="w-full p-4 bg-black/20 text-white rounded-xl border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30 transition-all duration-300 placeholder-slate-400 font-mono backdrop-blur-sm"
                 />
                 <div className="flex gap-3">
                   <motion.button
@@ -755,11 +666,7 @@ const Positions = ({ user }) => {
                       setShowPrivateKeyInput(false)
                       setPrivateKey('')
                     }}
-                    className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-white"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%)',
-                      border: '1px solid rgba(100, 116, 139, 0.3)'
-                    }}
+                    className="flex-1 px-4 py-3 rounded-xl text-sm font-normal text-white bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 backdrop-blur-sm"
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -773,7 +680,7 @@ const Positions = ({ user }) => {
                       }
                     }}
                     disabled={!privateKey.trim()}
-                    className="flex-1 gradient-button-primary text-white px-4 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-black/20 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white px-4 py-3 rounded-xl text-sm font-normal disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 backdrop-blur-sm"
                     whileHover={privateKey.trim() ? { scale: 1.02, y: -1 } : {}}
                     whileTap={{ scale: 0.98 }}
                   >
