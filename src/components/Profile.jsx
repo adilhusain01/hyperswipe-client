@@ -578,9 +578,7 @@ const Profile = ({ user }) => {
                   You'll receive real-time notifications for:
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
-                  <div>• 📈 Position P&L updates</div>
                   <div>• ⚙️ Order fills & executions</div>
-                  <div>• ⚠️ Risk management alerts</div>
                   <div>• 📊 Daily portfolio summaries</div>
                 </div>
               </motion.div>
