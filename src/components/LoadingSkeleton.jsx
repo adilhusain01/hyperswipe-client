@@ -272,8 +272,8 @@ export const PositionsSkeleton = () => (
               className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
             >
-              <Skeleton width={label === 'Portfolio Value' ? '90px' : label === 'Total PnL' ? '65px' : '58px'} height="12px" className="mx-auto mb-1" />
-              <Skeleton width={label === 'Portfolio Value' ? '70px' : label === 'Total PnL' ? '55px' : '12px'} height="14px" className="mx-auto" />
+              <Skeleton width={label === 'Portfolio' ? '70px' : label === 'Total PnL' ? '70px' : '70px'} height="12px" className="mx-auto mb-1" />
+              <Skeleton width={label === 'Portfolio' ? '70px' : label === 'Total PnL' ? '70px' : '70px'} height="14px" className="mx-auto" />
             </motion.div>
           ))}
         </div>

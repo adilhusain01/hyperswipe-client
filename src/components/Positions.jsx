@@ -376,7 +376,7 @@ const Positions = ({ user }) => {
               className="text-center p-3 rounded-xl min-h-[80px] flex flex-col justify-center bg-white/5 border border-white/10 backdrop-blur-sm"
               whileHover={{ scale: 1.02 }}
             >
-              <div className="text-slate-300 text-xs font-normal mb-1">Portfolio Value</div>
+              <div className="text-slate-300 text-xs font-normal mb-1">Portfolio</div>
               <div className="text-white font-medium text-sm leading-tight break-all">
                 ${accountValue.toFixed(2)}
               </div>
