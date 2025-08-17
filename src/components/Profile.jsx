@@ -540,18 +540,20 @@ const Profile = ({ user }) => {
           className="glass-card rounded-3xl p-6"
           whileHover={{ y: -2 }}
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{
-                background: telegramStatus.linked 
-                  ? 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
-                  : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
-              }}
-            ></div>
-            <h3 className="text-lg font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent">
-              📱 Telegram Alerts
-            </h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-3 h-3 rounded-full"
+                style={{
+                  background: telegramStatus.linked 
+                    ? 'linear-gradient(135deg, #86efac 0%, #22c55e 100%)'
+                    : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+                }}
+              ></div>
+              <h3 className="text-lg font-bold bg-gradient-to-r from-blue-200 to-cyan-300 bg-clip-text text-transparent">
+                Telegram
+              </h3>
+            </div>
             {telegramStatus.linked && (
               <div className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-lg border border-green-500/30">
                 ✓ Connected
@@ -571,30 +573,24 @@ const Profile = ({ user }) => {
                 className="p-4 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
                 whileHover={{ scale: 1.01 }}
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-green-300 text-sm font-medium">🎉 Telegram Connected!</div>
-                </div>
-                <div className="text-slate-300 text-sm mb-4">
-                  You'll receive real-time notifications for:
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
-                  <div>• ⚙️ Order fills & executions</div>
-                  <div>• 📊 Daily portfolio summaries</div>
+                <div className="text-green-300 text-sm font-medium mb-2">🎉 Connected</div>
+                <div className="text-slate-400 text-xs">
+                  • Order fills & executions • Daily portfolio summaries
                 </div>
               </motion.div>
               
               <div className="flex gap-3">
                 <motion.button
                   onClick={handleTestNotification}
-                  className="flex-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 px-4 py-3 rounded-xl text-sm font-semibold border border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-300"
+                  className="flex-1 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 px-4 py-2.5 rounded-xl text-sm font-semibold border border-blue-500/30 hover:from-blue-500/30 hover:to-cyan-500/30 transition-all duration-300"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  📱 Test Alert
+                  Test
                 </motion.button>
                 <motion.button
                   onClick={handleUnlinkTelegram}
-                  className="bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 px-4 py-3 rounded-xl text-sm font-semibold border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 transition-all duration-300"
+                  className="bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 px-4 py-2.5 rounded-xl text-sm font-semibold border border-red-500/30 hover:from-red-500/30 hover:to-rose-500/30 transition-all duration-300"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -609,12 +605,9 @@ const Profile = ({ user }) => {
                 className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20"
                 whileHover={{ scale: 1.01 }}
               >
-                <div className="text-blue-300 text-sm font-medium mb-2">🚀 Get Live Trading Alerts!</div>
-                <div className="text-slate-300 text-sm mb-3">
-                  Connect Telegram to receive instant notifications for position updates, P&L changes, and risk alerts.
-                </div>
-                <div className="text-xs text-slate-400">
-                  • Professional-grade trading alerts • Works on all devices • Always connected
+                <div className="text-blue-300 text-sm font-medium mb-2">Get Trading Alerts</div>
+                <div className="text-slate-400 text-xs">
+                  Real-time notifications for fills and portfolio updates
                 </div>
               </motion.div>
               
@@ -625,17 +618,14 @@ const Profile = ({ user }) => {
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  🔗 Connect Telegram
+                  Connect Telegram
                 </motion.button>
               ) : (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
-                    <div className="text-purple-300 text-sm font-medium mb-3">🤖 Setup Instructions:</div>
-                    <div className="space-y-2 text-xs text-slate-300">
-                      <div>1. Click the button below to open our bot</div>
-                      <div>2. Send <code className="bg-slate-700 px-1 rounded">/start</code> to the bot</div>
-                      <div>3. Copy your Chat ID from the bot's response</div>
-                      <div>4. Paste it in the field below</div>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+                    <div className="text-purple-300 text-sm font-medium mb-2">Setup:</div>
+                    <div className="space-y-1 text-xs text-slate-300">
+                      <div>1. Open bot → 2. Send /start → 3. Copy Chat ID → 4. Paste below</div>
                     </div>
                   </div>
                   
@@ -643,26 +633,26 @@ const Profile = ({ user }) => {
                     href={telegramService.generateBotLink()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-3 px-4 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300"
+                    className="block w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center py-2.5 px-4 rounded-xl text-sm font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300"
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    📱 Open Telegram Bot
+                    Open Bot
                   </motion.a>
                   
                   <div className="space-y-3">
                     <input
                       type="text"
-                      placeholder="Enter your Chat ID (e.g., 123456789)"
+                      placeholder="Chat ID (e.g., 123456789)"
                       value={telegramChatId}
                       onChange={(e) => setTelegramChatId(e.target.value)}
-                      className="w-full bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-3 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400 font-mono"
+                      className="w-full bg-gradient-to-r from-slate-800/50 to-slate-700/50 text-white px-4 py-2.5 rounded-xl border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:border-purple-400/50 transition-all duration-300 placeholder-slate-400 font-mono text-sm"
                       disabled={telegramLinking}
                     />
                     <div className="flex gap-3">
                       <motion.button
                         onClick={() => setShowTelegramSetup(false)}
-                        className="flex-1 bg-gradient-to-r from-slate-600/50 to-slate-500/50 text-slate-300 py-3 px-4 rounded-xl text-sm font-semibold border border-slate-600/30 hover:from-slate-600/70 hover:to-slate-500/70 transition-all duration-300"
+                        className="flex-1 bg-gradient-to-r from-slate-600/50 to-slate-500/50 text-slate-300 py-2.5 px-4 rounded-xl text-sm font-semibold border border-slate-600/30 hover:from-slate-600/70 hover:to-slate-500/70 transition-all duration-300"
                         whileHover={{ scale: 1.02, y: -1 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -671,7 +661,7 @@ const Profile = ({ user }) => {
                       <motion.button
                         onClick={handleLinkTelegram}
                         disabled={telegramLinking || !telegramChatId.trim()}
-                        className="flex-1 gradient-button-primary text-white py-3 px-4 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 gradient-button-primary text-white py-2.5 px-4 rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         whileHover={!telegramLinking && telegramChatId.trim() ? { scale: 1.02, y: -1 } : {}}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -681,7 +671,7 @@ const Profile = ({ user }) => {
                             <span>Linking...</span>
                           </div>
                         ) : (
-                          '🔗 Link Account'
+                          'Link'
                         )}
                       </motion.button>
                     </div>
