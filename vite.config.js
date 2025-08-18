@@ -17,22 +17,41 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Core React libraries
-          vendor: ['react', 'react-dom'],
+        manualChunks: (id) => {
+          // Bundle viem with vendor to avoid circular dependency issues
+          if (id.includes('viem')) {
+            return 'vendor'
+          }
           
-          // Authentication and wallet
-          privy: ['@privy-io/react-auth'],
-          viem: ['viem'],
+          // Core React libraries
+          if (id.includes('react') || id.includes('react-dom')) {
+            return 'vendor'
+          }
+          
+          // Authentication
+          if (id.includes('@privy-io/react-auth')) {
+            return 'privy'
+          }
           
           // UI and animations
-          framer: ['framer-motion'],
+          if (id.includes('framer-motion')) {
+            return 'framer'
+          }
           
           // Charts and trading
-          charts: ['lightweight-charts'],
+          if (id.includes('lightweight-charts')) {
+            return 'charts'
+          }
           
           // Routing
-          router: ['react-router-dom']
+          if (id.includes('react-router-dom')) {
+            return 'router'
+          }
+          
+          // Default vendor chunk for other node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor'
+          }
         },
         
         // Automatically split chunks by node_modules
@@ -47,9 +66,15 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000,
     
-    // Enable tree shaking for better optimization
+// Enable tree shaking for better optimization
     treeshake: {
-      moduleSideEffects: false
+      moduleSideEffects: (id) => {
+        // Preserve side effects for viem to avoid initialization issues
+        if (id.includes('viem')) {
+          return true
+        }
+        return false
+      }
     }
   },
   
@@ -93,8 +118,12 @@ export default defineConfig({
       '@privy-io/react-auth',
       'framer-motion',
       'lightweight-charts',
-      'viem'
+      // Force viem to be pre-bundled to avoid runtime issues
+      'viem',
+      'viem/chains'
     ],
-    exclude: ['@vite/client', '@vite/env']
+    exclude: ['@vite/client', '@vite/env'],
+    // Ensure viem is properly handled
+    force: true
   }
 })
