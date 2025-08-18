@@ -48,6 +48,14 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Prevent overscroll stretch/rubber band effect on all devices */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  /* Ensure black background is always visible */
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
@@ -56,6 +64,23 @@ body {
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: 0.01em;
+  /* Additional overscroll prevention */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  /* Prevent pull-to-refresh on mobile */
+  overscroll-behavior-y: none;
+}
+
+/* Prevent overscroll on all scrollable elements */
+* {
+  overscroll-behavior: none;
+}
+
+/* Root element overscroll prevention */
+#root {
+  overscroll-behavior: none;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  min-height: 100vh;
 }
 
 /* Typography Scale */
@@ -263,7 +288,42 @@ body {
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-/* Mobile Responsive Adjustments */
+/* Mobile Overscroll Prevention and Fixes */
+@media (max-width: 768px) {
+  /* Enhanced mobile overscroll prevention */
+  html, body {
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Allow scrolling within the app container */
+  #root {
+    overflow: auto;
+    height: 100vh;
+    width: 100vw;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+  }
+  
+  /* Prevent pull-to-refresh and overscroll bounce */
+  body {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+  }
+}
+
+/* Desktop and larger screens - normal scrolling */
+@media (min-width: 769px) {
+  html, body {
+    overflow: auto;
+  }
+}
+
+/* Mobile Responsive Typography Adjustments */
 @media (max-width: 640px) {
   .text-xs { font-size: 0.7rem; }
   .text-sm { font-size: 0.8rem; }
@@ -272,4 +332,17 @@ body {
   .text-xl { font-size: 1.125rem; }
   .text-2xl { font-size: 1.25rem; }
   .text-3xl { font-size: 1.5rem; }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  html, body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent zoom on input focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
 }

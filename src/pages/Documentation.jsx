@@ -54,6 +54,7 @@ const Documentation = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [activeSection, setActiveSection] = useState('overview')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const sections = [
     { id: 'overview', title: 'Overview', icon: rocketIcon },
@@ -1537,11 +1538,11 @@ const Documentation = () => {
       <CryptoTrailBackground />
       
       <div className="relative z-20">
-        {/* Header */}
+        {/* Fixed Header */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between p-4 md:p-6 border-b border-white/10"
+          className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between p-4 md:p-6 border-b border-white/10 bg-black/20 backdrop-blur-xl"
         >
           <button
             onClick={() => navigate(-1)}
@@ -1561,19 +1562,67 @@ const Documentation = () => {
           <div className="w-10 h-10" /> {/* Spacer for centering */}
         </motion.div>
 
-        <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
-          {/* Sidebar */}
+        {/* Mobile Hamburger Menu Button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden fixed top-20 left-4 z-60 w-10 h-10 bg-black/20 backdrop-blur-xl border border-white/10 rounded-lg flex items-center justify-center hover:bg-white/10 transition-all duration-200"
+        >
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {sidebarOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+
+        {/* Mobile Sidebar Overlay */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-45"
+            />
+          )}
+        </AnimatePresence>
+
+        <div className="flex min-h-[calc(100vh-80px)]">
+          {/* Sidebar - Fixed on Desktop, Sliding on Mobile */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="w-full lg:w-80 border-r border-white/10 p-4 md:p-6 lg:overflow-y-auto bg-black/20 backdrop-blur-xl"
+            animate={{ 
+              opacity: 1, 
+              x: 0 // Always visible on desktop, mobile handled by transform classes
+            }}
+            transition={{ 
+              duration: 0.3,
+              ease: "easeInOut"
+            }}
+            className={`
+              fixed lg:fixed top-0 lg:top-20 left-0 
+              h-full lg:h-[calc(100vh-80px)] 
+              w-80 
+              border-r border-white/10 
+              bg-black/20 backdrop-blur-xl
+              z-50 lg:z-30
+              overflow-y-auto
+              pt-20 lg:pt-4 p-4 lg:p-6
+              transform transition-transform duration-300 ease-in-out
+              ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+              lg:translate-x-0
+            `}
           >
             <nav className="space-y-2">
               {sections.map((section) => (
                 <button
                   key={section.id}
-                  onClick={() => handleSectionChange(section.id)}
+                  onClick={() => {
+                    handleSectionChange(section.id)
+                    setSidebarOpen(false) // Close mobile sidebar after selection
+                  }}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center space-x-3 ${
                     activeSection === section.id
                       ? 'bg-white/10 text-white border border-white/20 shadow-lg'
@@ -1587,8 +1636,8 @@ const Documentation = () => {
             </nav>
           </motion.div>
 
-          {/* Content */}
-          <div className="flex-1 p-4 md:p-8 lg:overflow-y-auto">
+          {/* Content - With left margin for fixed sidebar on desktop */}
+          <div className="flex-1 lg:ml-80 p-4 md:p-8 overflow-y-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
