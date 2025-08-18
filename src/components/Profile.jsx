@@ -19,6 +19,8 @@ import clipboardCheckIcon from '../glass_icons/clipboard-check.svg'
 import sparkleIcon from '../glass_icons/sparkle.svg'
 import rocketIcon from '../glass_icons/rocket.svg'
 import bookOpenIcon from '../glass_icons/book-open.svg'
+import crosshairsIcon from '../glass_icons/crosshairs.svg'
+import connectIcon from '../glass_icons/connect.svg'
 
 const CopyIcon = ({ onClick, copied }) => (
   <motion.button
@@ -324,41 +326,37 @@ const Profile = ({ user }) => {
             </h2>
           </div>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/10">
-              <span className="text-slate-300 font-normal text-sm">
-                {addressDisplay.isHLName ? 'Hyperliquid Name' : 'Wallet Address'}
-              </span>
-              <div className="flex items-center">
-                {hlNameLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span className="text-slate-400 text-sm">Resolving...</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex flex-col items-end">
-                      <span className={`text-sm bg-black/20 px-3 py-1 rounded-lg backdrop-blur-sm border border-white/10 ${
-                        addressDisplay.isHLName ? 'text-blue-300 font-medium' : 'text-slate-200 font-mono'
-                      }`}>
-                        {addressDisplay.display}
-                      </span>
-                      {addressDisplay.isHLName && addressDisplay.address && (
-                        <span className="text-xs text-slate-400 font-mono mt-1 opacity-75">
-                          {`${addressDisplay.address.slice(0, 6)}...${addressDisplay.address.slice(-4)}`}
-                        </span>
-                      )}
-                    </div>
-                    {addressDisplay.isHLName && (
-                      <div className="ml-2 px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-md">
-                        <span className="text-xs text-blue-300 font-medium">.hl</span>
-                      </div>
-                    )}
-                  </>
-                )}
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex justify-between items-start mb-3">
+                <span className="text-slate-300 font-normal text-sm">
+                  {addressDisplay.isHLName ? 'Hyperliquid Name' : 'Wallet Address'}
+                </span>
                 {user?.wallet?.address && !hlNameLoading && (
                   <CopyIcon onClick={copyAddress} copied={addressCopied} />
                 )}
               </div>
+              
+              {hlNameLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span className="text-slate-400 text-sm">Resolving...</span>
+                </div>
+              ) : addressDisplay.isHLName ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-200 font-medium text-sm bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                    {addressDisplay.display}
+                  </span>
+                  {addressDisplay.address && (
+                    <span className="text-xs text-slate-400 font-mono opacity-75">
+                      {`${addressDisplay.address.slice(0, 6)}...${addressDisplay.address.slice(-4)}`}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-slate-200 font-mono text-sm bg-black/20 px-3 py-1.5 rounded-lg backdrop-blur-sm border border-white/10">
+                  {addressDisplay.display}
+                </span>
+              )}
             </div>
             <div className="flex justify-between items-center p-4 rounded-xl bg-white/5 border border-white/10">
               <span className="text-slate-300 font-normal text-sm">Email</span>
@@ -437,32 +435,32 @@ const Profile = ({ user }) => {
         {/* Hyperliquid Names Showcase */}
         {addressDisplay.isHLName && (
           <motion.div 
-            className="glass-card rounded-2xl p-8 bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl border border-blue-400/20 shadow-2xl"
+            className="glass-card rounded-2xl p-8 bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
             whileHover={{ y: -2 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
-                <span className="text-blue-300 font-bold text-sm">.hl</span>
+              <div className="w-8 h-8 bg-black/20 border border-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                <span className="text-slate-200 font-bold text-sm">.hl</span>
               </div>
-              <h3 className="text-lg font-medium bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
+              <h3 className="text-lg font-medium bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">
                 Hyperliquid Names Identity
               </h3>
             </div>
             
             <div className="space-y-4">
               <motion.div 
-                className="p-4 rounded-xl bg-white/5 border border-blue-400/20"
+                className="p-4 rounded-xl bg-white/5 border border-white/10"
                 whileHover={{ scale: 1.01 }}
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">🎯</span>
+                  <img src={crosshairsIcon} alt="Target" className="w-6 h-6 mt-1" />
                   <div>
-                    <div className="text-blue-300 font-medium mb-1">Verified Identity</div>
-                    <div className="text-slate-300 text-sm">
-                      Your wallet is linked to <span className="text-blue-300 font-medium">{addressDisplay.name}</span>, 
+                    <div className="text-slate-200 font-medium mb-1">Verified Identity</div>
+                    <div className="text-slate-300 text-sm font-normal">
+                      Your wallet is linked to <span className="text-slate-200 font-medium">{addressDisplay.name}</span>, 
                       a human-readable name on Hyperliquid's decentralized naming system.
                     </div>
                   </div>
@@ -470,14 +468,14 @@ const Profile = ({ user }) => {
               </motion.div>
               
               <motion.div 
-                className="p-4 rounded-xl bg-white/5 border border-blue-400/20"
+                className="p-4 rounded-xl bg-white/5 border border-white/10"
                 whileHover={{ scale: 1.01 }}
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">🔗</span>
+                  <img src={connectIcon} alt="Connect" className="w-6 h-6 mt-1" />
                   <div>
-                    <div className="text-blue-300 font-medium mb-1">Enhanced Profile</div>
-                    <div className="text-slate-300 text-sm">
+                    <div className="text-slate-200 font-medium mb-1">Enhanced Profile</div>
+                    <div className="text-slate-300 text-sm font-normal">
                       .hl names provide professional identity for DeFi trading, replacing complex addresses with memorable names.
                     </div>
                   </div>
