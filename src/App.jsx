@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import TradingCard from './components/TradingCard'
 import Profile from './components/Profile'
@@ -62,9 +62,32 @@ const Documentation = () => {
 
 const App = () => {
   const { ready, authenticated, login, logout, user } = usePrivy()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [currentView, setCurrentView] = useState('trading') // 'trading', 'positions', 'markets', or 'profile'
   const [currentAssetIndex, setCurrentAssetIndex] = useState(0)
   const [totalAssets, setTotalAssets] = useState(0)
+
+  const validViews = ['trading', 'markets', 'positions', 'profile']
+
+  // Handle query parameter navigation
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const viewParam = searchParams.get('view')
+    
+    if (viewParam && validViews.includes(viewParam)) {
+      setCurrentView(viewParam)
+    } else if (viewParam) {
+      // Invalid view parameter, redirect to trading
+      navigate('/?view=trading', { replace: true })
+    }
+  }, [location.search, navigate])
+
+  // Handle view changes and update URL
+  const handleViewChange = (view) => {
+    setCurrentView(view)
+    navigate(`/?view=${view}`, { replace: true })
+  }
 
   if (!ready) {
     return (
@@ -149,7 +172,7 @@ const App = () => {
             {/* Navigation */}
             <div className="flex space-x-1.5">
               <motion.button
-                onClick={() => setCurrentView('trading')}
+                onClick={() => handleViewChange('trading')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'trading' 
                     ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
@@ -170,7 +193,7 @@ const App = () => {
               </motion.button>
 
               <motion.button
-                onClick={() => setCurrentView('markets')}
+                onClick={() => handleViewChange('markets')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'markets' 
                     ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
@@ -190,7 +213,7 @@ const App = () => {
                 </motion.div>
               </motion.button>
               <motion.button
-                onClick={() => setCurrentView('positions')}
+                onClick={() => handleViewChange('positions')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'positions' 
                     ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
@@ -210,7 +233,7 @@ const App = () => {
                 </motion.div>
               </motion.button>
               <motion.button
-                onClick={() => setCurrentView('profile')}
+                onClick={() => handleViewChange('profile')}
                 className={`p-2.5 rounded-xl transition-all duration-300 ${
                   currentView === 'profile' 
                     ? 'bg-white/10 text-white border border-white/20 shadow-lg backdrop-blur-sm' 
@@ -291,7 +314,7 @@ const App = () => {
                 user={user} 
                 onSelectAsset={(assetIndex) => {
                   setCurrentAssetIndex(assetIndex)
-                  setCurrentView('trading')
+                  handleViewChange('trading')
                 }}
               />
             ) : (

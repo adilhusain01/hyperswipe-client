@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import CryptoTrailBackground from '../components/CryptoTrailBackground'
 import hyperswipeLogo from '../assets/logos/hyperswipe-no-bg.png'
 
@@ -20,6 +20,7 @@ import connectIcon from '../glass_icons/connect.svg'
 import lockIcon from '../glass_icons/lock.svg'
 import windowIcon from '../glass_icons/window.svg'
 import gearIcon from '../glass_icons/gear.svg'
+import userIcon from '../glass_icons/user.svg'
 import circleArrowUpIcon from '../glass_icons/circle-arrow-up.svg'
 import circleArrowDownIcon from '../glass_icons/circle-arrow-down.svg'
 import circleArrowRightIcon from '../glass_icons/circle-arrow-right.svg'
@@ -50,6 +51,7 @@ const BackIcon = () => (
 
 const Documentation = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const [activeSection, setActiveSection] = useState('overview')
 
   const sections = [
@@ -58,10 +60,29 @@ const Documentation = () => {
     { id: 'trading', title: 'Trading Guide', icon: circleChartLineIcon },
     { id: 'perpetuals', title: 'Perpetuals 101', icon: swapIcon },
     { id: 'hyperliquid', title: 'Hyperliquid', icon: cloudBoltIcon },
+    { id: 'hlnames', title: 'Hyperliquid Names', icon: userIcon },
     { id: 'safety', title: 'Safety & Risk', icon: triangleWarningIcon },
     { id: 'telegram', title: 'Telegram Alerts', icon: bellIcon },
     { id: 'api', title: 'Technical', icon: appStackIcon }
   ]
+
+  // Handle hash-based navigation on initial load and URL changes
+  useEffect(() => {
+    const hash = location.hash.replace('#', '')
+    if (hash && sections.some(section => section.id === hash)) {
+      setActiveSection(hash)
+    }
+  }, [location.hash])
+
+  // Update URL when section changes manually
+  const handleSectionChange = (sectionId) => {
+    setActiveSection(sectionId)
+    if (sectionId !== 'overview') {
+      navigate(`/docs#${sectionId}`, { replace: true })
+    } else {
+      navigate('/docs', { replace: true })
+    }
+  }
 
   const renderContent = () => {
     switch (activeSection) {
@@ -617,6 +638,316 @@ const Documentation = () => {
                   <img src={bellIcon} alt="Alerts" className="w-10 h-10 mx-auto mb-4" />
                   <h3 className="text-base font-medium text-slate-200 mb-2">Smart Alerts</h3>
                   <p className="text-slate-300 font-normal">Telegram notifications</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )
+
+      case 'hlnames':
+        return (
+          <div className="space-y-8">
+            <h1 className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent text-center mb-8">
+              Hyperliquid Names (.hl)
+            </h1>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="
+                glass-card
+                rounded-2xl
+                p-6 sm:p-8
+                bg-gradient-to-br from-blue-500/10 to-purple-500/10
+                backdrop-blur-xl
+                border border-blue-400/20
+                shadow-2xl
+                max-w-full
+                mx-auto
+              "
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+                <div className="w-10 h-10 sm:w-8 sm:h-8 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                  <span className="text-blue-300 font-bold text-sm">.hl</span>
+                </div>
+                <h2 className="text-lg sm:text-xl font-medium bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
+                  Professional Trading Identity
+                </h2>
+              </div>
+
+              <p className="text-slate-300 leading-relaxed mb-6 font-normal text-sm sm:text-base">
+                Hyperliquid Names (.hl) is a decentralized naming system that maps human-readable names like 
+                <span className="text-blue-300 font-medium"> jeff.hl</span> to wallet addresses. HyperSwipe showcases 
+                your .hl identity prominently in your profile, replacing complex addresses with memorable names for 
+                professional DeFi trading.
+              </p>
+
+              <div className="bg-white/5 p-4 sm:p-6 rounded-xl border border-blue-400/20">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+                  <div>
+                    <div className="text-blue-300 font-medium mb-2 text-sm sm:text-base">Example Transformation</div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                      <div className="text-slate-400 font-mono text-xs sm:text-sm break-all">
+                        {"0xF26F5551E96aE5162509B25925fFfa7F07B2D652 => testooor.hl"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+                    <h1 className="text-base sm:text-lg md:text-xl font-semibold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent text-center">
+                      {"Mint Your .hl name Now ->"}
+                    </h1>
+                    <button
+                      onClick={() => window.open('https://app.hlnames.xyz/', '_blank')}
+                      className="
+                        relative
+                        font-medium
+                        px-6
+                        py-3
+                        rounded-xl
+                        border
+                        border-white/30
+                        bg-white/10
+                        backdrop-blur-md
+                        text-blue-300
+                        shadow-lg
+                        transition-all
+                        duration-300
+                        ease-in-out
+                        hover:bg-white/20
+                        hover:scale-105
+                        hover:shadow-xl
+                        active:scale-95
+                      "
+                    >
+                      Mint
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+              >
+                <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
+                  <img src={sparkleIcon} alt="Sparkle" className="w-6 h-6" />
+                  <span>Key Benefits</span>
+                </h2>
+                <ul className="space-y-4">
+                  <li className="flex items-start space-x-4">
+                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <div>
+                      <h3 className="text-base font-medium text-white">Human-Readable Identity</h3>
+                      <p className="text-slate-300 font-normal">Replace complex wallet addresses with memorable names</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start space-x-4">
+                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <div>
+                      <h3 className="text-base font-medium text-white">Professional Branding</h3>
+                      <p className="text-slate-300 font-normal">Build a recognizable identity in the DeFi ecosystem</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start space-x-4">
+                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <div>
+                      <h3 className="text-base font-medium text-white">Decentralized & Secure</h3>
+                      <p className="text-slate-300 font-normal">Owned by smart contracts with transparent rules</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start space-x-4">
+                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <div>
+                      <h3 className="text-base font-medium text-white">Reverse Resolution</h3>
+                      <p className="text-slate-300 font-normal">Primary names enable address-to-name lookups</p>
+                    </div>
+                  </li>
+                </ul>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+              >
+                <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
+                  <img src={userIcon} alt="User" className="w-6 h-6" />
+                  <span>HyperSwipe Integration</span>
+                </h2>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-200 mb-3">Profile Enhancement</h3>
+                    <p className="text-slate-300 mb-4 font-normal">
+                      When you connect a wallet with a .hl name, HyperSwipe automatically:
+                    </p>
+                    <ul className="text-slate-300 space-y-2 font-normal">
+                      <li>• Displays your .hl name prominently in your profile</li>
+                      <li>• Shows a distinctive blue badge for verification</li>
+                      <li>• Provides educational content about your identity</li>
+                      <li>• Maintains fallback to address truncation if needed</li>
+                    </ul>
+                  </div>
+                  <div className="bg-black/10 border border-white/5 p-4 rounded-xl">
+                    <h4 className="text-sm font-medium text-blue-300 mb-2">Visual Features</h4>
+                    <div className="flex items-center space-x-3">
+                      <div className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-md">
+                        <span className="text-xs text-blue-300 font-medium">.hl</span>
+                      </div>
+                      <span className="text-slate-300 font-normal">Distinctive styling and branding</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+            >
+              <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
+                <img src={crosshairsIcon} alt="Target" className="w-6 h-6" />
+                <span>How Hyperliquid Names Work</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">Forward Resolution</h3>
+                  <p className="text-slate-300 mb-4 font-normal">
+                    Converting names to addresses (e.g., testooor.hl → 0xF26F...)
+                  </p>
+                  <div className="bg-black/10 border border-white/5 p-4 rounded-xl">
+                    <code className="text-blue-300 font-mono text-sm">
+                      api.hlnames.xyz/resolve/testooor.hl
+                    </code>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">Reverse Resolution</h3>
+                  <p className="text-slate-300 mb-4 font-normal">
+                    Converting addresses to names (0xF26F... → testooor.hl)
+                  </p>
+                  <div className="bg-black/10 border border-white/5 p-4 rounded-xl">
+                    <code className="text-blue-300 font-mono text-sm">
+                      api.hlnames.xyz/reverse/0xF26F...
+                    </code>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+            >
+              <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
+                <img src={layersIcon} alt="Layers" className="w-6 h-6" />
+                <span>Hyperliquid Ecosystem Impact</span>
+              </h2>
+              <p className="text-slate-300 mb-6 font-normal">
+                Hyperliquid Names represents a major step forward for the Hyperliquid ecosystem, providing 
+                professional identity infrastructure that enhances user experience across all applications.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-6 bg-black/10 rounded-xl border border-white/5">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                    <img src={globeIcon} alt="Global" className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-medium text-slate-200 mb-2">Ecosystem Growth</h3>
+                  <p className="text-slate-300 font-normal">Drives adoption by making DeFi more accessible</p>
+                </div>
+                <div className="text-center p-6 bg-black/10 rounded-xl border border-white/5">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                    <img src={connectIcon} alt="Connect" className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-medium text-slate-200 mb-2">Network Effects</h3>
+                  <p className="text-slate-300 font-normal">Creates viral adoption through social recognition</p>
+                </div>
+                <div className="text-center p-6 bg-black/10 rounded-xl border border-white/5">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                    <img src={sparkleIcon} alt="Sparkle" className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-base font-medium text-slate-200 mb-2">Innovation Catalyst</h3>
+                  <p className="text-slate-300 font-normal">Enables new use cases and applications</p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
+            >
+              <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
+                <img src={magicWandSparkleIcon} alt="Magic Wand" className="w-6 h-6" />
+                <span>Use Cases & Applications</span>
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">Individual Traders</h3>
+                  <ul className="text-slate-300 space-y-3 font-normal">
+                    <li>• Professional identity for social trading</li>
+                    <li>• Simplified wallet address sharing</li>
+                    <li>• Enhanced reputation and trust building</li>
+                    <li>• Memorable branding for trading strategies</li>
+                    <li>• Cross-platform identity consistency</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium text-slate-200 mb-4">DeFi Applications</h3>
+                  <ul className="text-slate-300 space-y-3 font-normal">
+                    <li>• Improved user experience in UIs</li>
+                    <li>• Social features and user discovery</li>
+                    <li>• Professional trading interfaces</li>
+                    <li>• Analytics and leaderboards</li>
+                    <li>• Community building and networking</li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="glass-card p-8 rounded-2xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 backdrop-blur-xl border border-blue-400/10 shadow-2xl"
+            >
+              <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
+                <img src={rocketIcon} alt="Rocket" className="w-6 h-6" />
+                <span>Getting Your .hl Name</span>
+              </h2>
+              <p className="text-slate-300 mb-6 font-normal">
+                Ready to get your own .hl identity? The Hyperliquid Names ecosystem provides multiple ways to 
+                acquire and manage your decentralized identity.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white/5 p-6 rounded-xl border border-blue-400/20">
+                  <h3 className="text-lg font-medium text-blue-300 mb-3">Primary Marketplace</h3>
+                  <p className="text-slate-300 mb-4 font-normal">
+                    Visit the official Hyperliquid Names platform to browse available names and make purchases.
+                  </p>
+                  <div className="text-sm text-slate-400 font-normal">
+                    Names are typically available through auctions or direct purchase
+                  </div>
+                </div>
+                <div className="bg-white/5 p-6 rounded-xl border border-blue-400/20">
+                  <h3 className="text-lg font-medium text-blue-300 mb-3">Set as Primary</h3>
+                  <p className="text-slate-300 mb-4 font-normal">
+                    After acquiring a name, set it as your primary name to enable reverse resolution across all applications.
+                  </p>
+                  <div className="text-sm text-slate-400 font-normal">
+                    Primary names appear automatically in compatible dApps like HyperSwipe
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1251,7 +1582,7 @@ const Documentation = () => {
               {sections.map((section) => (
                 <button
                   key={section.id}
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={() => handleSectionChange(section.id)}
                   className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center space-x-3 ${
                     activeSection === section.id
                       ? 'bg-white/10 text-white border border-white/20 shadow-lg'
