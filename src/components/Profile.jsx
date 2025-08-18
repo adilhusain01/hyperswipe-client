@@ -607,11 +607,6 @@ const Profile = ({ user }) => {
                   ${walletUSDCBalance.toFixed(2)}
                 </div>
                 <div className="text-slate-200 text-sm opacity-80 font-normal">USDC</div>
-                {walletUSDCBalance === 0 && (
-                  <div className="text-xs text-slate-300 mt-2 px-2 py-1 bg-black/20 rounded-lg inline-block border border-white/10 font-normal">
-                    Using mock USDC for testnet
-                  </div>
-                )}
               </div>
               <motion.div 
                 className="text-slate-400"
