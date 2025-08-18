@@ -9,18 +9,17 @@ import telegramService from '../services/telegramService'
 import hyperliquidNamesService from '../services/hyperliquidNames'
 import { ProfileSkeleton } from './LoadingSkeleton'
 
-// Import Glass Icons
-import eyeIcon from '../glass_icons/eye.svg'
-import userIcon from '../glass_icons/user.svg'
-import walletContentIcon from '../glass_icons/wallet-content.svg'
-import moneyBillIcon from '../glass_icons/money-bill.svg'
-import bellIcon from '../glass_icons/bell.svg'
-import clipboardCheckIcon from '../glass_icons/clipboard-check.svg'
-import sparkleIcon from '../glass_icons/sparkle.svg'
-import rocketIcon from '../glass_icons/rocket.svg'
-import bookOpenIcon from '../glass_icons/book-open.svg'
-import crosshairsIcon from '../glass_icons/crosshairs.svg'
-import connectIcon from '../glass_icons/connect.svg'
+// Glass Icons from Cloudinary CDN
+const eyeIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531375/eye_knatog.svg"
+const userIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531614/user_jcnps2.svg"
+const walletContentIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531616/wallet-content_znbbws.svg"
+const moneyBillIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531604/money-bill_gmc79l.svg"
+const bellIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531354/bell_lfkzl5.svg"
+const clipboardCheckIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531369/clipboard-check_qkff8c.svg"
+const rocketIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531605/rocket_r3scik.svg"
+const bookOpenIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531355/book-open_o4jjla.svg"
+const crosshairsIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531373/crosshairs_jqzlnt.svg"
+const connectIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531371/connect_afpip6.svg"
 
 const CopyIcon = ({ onClick, copied }) => (
   <motion.button

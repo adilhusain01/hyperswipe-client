@@ -4,10 +4,9 @@ import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
 import websocketService from '../services/websocket'
 import { MarketListSkeleton } from './LoadingSkeleton'
 
-// Import Glass Icons
-import layersIcon from '../glass_icons/layers.svg'
-import magnifierIcon from '../glass_icons/magnifier.svg'
-import squareChartLineIcon from '../glass_icons/square-chart-line.svg'
+// Glass Icons from Cloudinary CDN
+const layersIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531601/layers_qzjdlf.svg"
+const magnifierIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531603/magnifier_ufmctf.svg"
 
 // Format price based on the asset's value
 const formatPrice = (price) => {

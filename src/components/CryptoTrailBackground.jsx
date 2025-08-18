@@ -104,38 +104,22 @@ class SnakePathfinder {
   }
 }
 
-// Import crypto icons
-import algorandIcon from '../assets/algorand.svg'
-import avalancheIcon from '../assets/avalanche.svg'
-import bitcoinIcon from '../assets/bitcoin.svg'
-import bnbIcon from '../assets/bnb.svg'
-import dogecoinIcon from '../assets/dogecoin.svg'
-import ethereumIcon from '../assets/ethereum.svg'
-import polkadotIcon from '../assets/polkadot.svg'
-import polygonIcon from '../assets/polygon.svg'
-import solanaIcon from '../assets/solana.svg'
-import stellarIcon from '../assets/stellar.svg'
-import tetherIcon from '../assets/tether.svg'
-import tronIcon from '../assets/tron.svg'
-import usdcIcon from '../assets/usdc.svg'
-import xrpIcon from '../assets/xrp.svg'
-
 // Crypto icons array with romantic theme colors
 const cryptoIcons = [
-  { src: bitcoinIcon, name: 'Bitcoin', color: '#fbbf24', glowColor: '#f59e0b' },
-  { src: ethereumIcon, name: 'Ethereum', color: '#8b5cf6', glowColor: '#7c3aed' },
-  { src: bnbIcon, name: 'BNB', color: '#fcd34d', glowColor: '#f59e0b' },
-  { src: solanaIcon, name: 'Solana', color: '#a855f7', glowColor: '#9333ea' },
-  { src: dogecoinIcon, name: 'Dogecoin', color: '#fbbf24', glowColor: '#d97706' },
-  { src: polkadotIcon, name: 'Polkadot', color: '#ec4899', glowColor: '#db2777' },
-  { src: avalancheIcon, name: 'Avalanche', color: '#f87171', glowColor: '#dc2626' },
-  { src: polygonIcon, name: 'Polygon', color: '#a855f7', glowColor: '#7c3aed' },
-  { src: algorandIcon, name: 'Algorand', color: '#64748b', glowColor: '#475569' },
-  { src: stellarIcon, name: 'Stellar', color: '#8b5cf6', glowColor: '#7c3aed' },
-  { src: tronIcon, name: 'Tron', color: '#f87171', glowColor: '#dc2626' },
-  { src: xrpIcon, name: 'XRP', color: '#64748b', glowColor: '#475569' },
-  { src: tetherIcon, name: 'Tether', color: '#10b981', glowColor: '#059669' },
-  { src: usdcIcon, name: 'USDC', color: '#3b82f6', glowColor: '#2563eb' }
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530788/bitcoin_c6pytg.svg", name: 'Bitcoin', color: '#fbbf24', glowColor: '#f59e0b' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530789/ethereum_j0sx4l.svg", name: 'Ethereum', color: '#8b5cf6', glowColor: '#7c3aed' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530788/bnb_a5av2m.svg", name: 'BNB', color: '#fcd34d', glowColor: '#f59e0b' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530790/solana_nfznuu.svg", name: 'Solana', color: '#a855f7', glowColor: '#9333ea' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530788/dogecoin_ftv186.svg", name: 'Dogecoin', color: '#fbbf24', glowColor: '#d97706' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530790/polkadot_ulsttb.svg", name: 'Polkadot', color: '#ec4899', glowColor: '#db2777' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530788/avalanche_dskwxl.svg", name: 'Avalanche', color: '#f87171', glowColor: '#dc2626' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530790/polygon_ewujxr.svg", name: 'Polygon', color: '#a855f7', glowColor: '#7c3aed' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530788/algorand_vl1efr.svg", name: 'Algorand', color: '#64748b', glowColor: '#475569' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530790/stellar_n6edwr.svg", name: 'Stellar', color: '#8b5cf6', glowColor: '#7c3aed' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530791/tron_zrjoun.svg", name: 'Tron', color: '#f87171', glowColor: '#dc2626' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530791/xrp_vmunsj.svg", name: 'XRP', color: '#64748b', glowColor: '#475569' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530790/tether_srtpcr.svg", name: 'Tether', color: '#10b981', glowColor: '#059669' },
+  { src: "https://res.cloudinary.com/djxuqljgr/image/upload/v1755530959/usdc_zdiqkb.svg", name: 'USDC', color: '#3b82f6', glowColor: '#2563eb' }
 ]
 
 // Directions for snake movement

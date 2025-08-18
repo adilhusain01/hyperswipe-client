@@ -18,14 +18,39 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          // Core React libraries
           vendor: ['react', 'react-dom'],
+          
+          // Authentication and wallet
           privy: ['@privy-io/react-auth'],
+          viem: ['viem'],
+          
+          // UI and animations
           framer: ['framer-motion'],
-          charts: ['lightweight-charts']
+          
+          // Charts and trading
+          charts: ['lightweight-charts'],
+          
+          // Routing
+          router: ['react-router-dom']
+        },
+        
+        // Automatically split chunks by node_modules
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId
+          if (facadeModuleId && facadeModuleId.includes('node_modules')) {
+            return 'vendor/[name].[hash].js'
+          }
+          return 'assets/[name].[hash].js'
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    
+    // Enable tree shaking for better optimization
+    treeshake: {
+      moduleSideEffects: false
+    }
   },
   
   // Development server

@@ -2,41 +2,42 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useLocation } from 'react-router-dom'
 import CryptoTrailBackground from '../components/CryptoTrailBackground'
-import hyperswipeLogo from '../assets/logos/hyperswipe-no-bg.png'
+// Logo hosted on Cloudinary CDN for better performance
+const hyperswipeLogo = 'https://res.cloudinary.com/djxuqljgr/image/upload/v1755535763/hyperswipe-no-bg_ztqnzb.png'
 
-// Import Glass Icons
-import rocketIcon from '../glass_icons/rocket.svg'
-import boltIcon from '../glass_icons/bolt.svg'
-import circleChartLineIcon from '../glass_icons/circle-chart-line.svg'
-import swapIcon from '../glass_icons/swap.svg'
-import cloudBoltIcon from '../glass_icons/cloud-bolt.svg'
-import triangleWarningIcon from '../glass_icons/triangle-warning.svg'
-import bellIcon from '../glass_icons/bell.svg'
-import appStackIcon from '../glass_icons/app-stack.svg'
-import laptopMobileIcon from '../glass_icons/laptop-mobile.svg'
-import gaugeIcon from '../glass_icons/gauge.svg'
-import squareChartLineIcon from '../glass_icons/square-chart-line.svg'
-import connectIcon from '../glass_icons/connect.svg'
-import lockIcon from '../glass_icons/lock.svg'
-import windowIcon from '../glass_icons/window.svg'
-import gearIcon from '../glass_icons/gear.svg'
-import userIcon from '../glass_icons/user.svg'
-import circleArrowUpIcon from '../glass_icons/circle-arrow-up.svg'
-import circleArrowDownIcon from '../glass_icons/circle-arrow-down.svg'
-import circleArrowRightIcon from '../glass_icons/circle-arrow-right.svg'
-import circleArrowLeftIcon from '../glass_icons/circle-arrow-left.svg'
-import layersIcon from '../glass_icons/layers.svg'
-import cubeIcon from '../glass_icons/cube.svg'
-import clipboardCheckIcon from '../glass_icons/clipboard-check.svg'
-import sparkleIcon from '../glass_icons/sparkle.svg'
-import magicWandSparkleIcon from '../glass_icons/magic-wand-sparkle.svg'
-import crosshairsIcon from '../glass_icons/crosshairs.svg'
-import faceGrinIcon from '../glass_icons/face-grin.svg'
-import arrowsBoldOppositeDirectionIcon from '../glass_icons/arrows-bold-opposite-direction.svg'
-import moneyBillIcon from '../glass_icons/money-bill.svg'
-import codeEditorIcon from '../glass_icons/code-editor.svg'
-import hammerIcon from '../glass_icons/hammer.svg'
-import sitemapIcon from '../glass_icons/sitemap.svg'
+// Glass Icons from Cloudinary CDN
+const rocketIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531605/rocket_r3scik.svg"
+const boltIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531355/bolt_rsnwhm.svg"
+const circleChartLineIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531367/circle-chart-line_qmhkmd.svg"
+const swapIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531610/swap_s67lhm.svg"
+const cloudBoltIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531370/cloud-bolt_rnrdit.svg"
+const triangleWarningIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531614/triangle-warning_joqlos.svg"
+const bellIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531354/bell_lfkzl5.svg"
+const appStackIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531353/app-stack_cg9kgr.svg"
+const laptopMobileIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531600/laptop-mobile_mdfotc.svg"
+const gaugeIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531537/gauge_xglodz.svg"
+const squareChartLineIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531607/square-chart-line_ohqzni.svg"
+const connectIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531371/connect_afpip6.svg"
+const lockIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531602/lock_yqgjcz.svg"
+const windowIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531617/window_z58o63.svg"
+const gearIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531537/gear_sfhzr0.svg"
+const userIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531614/user_jcnps2.svg"
+const circleArrowUpIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531366/circle-arrow-up_wxost5.svg"
+const circleArrowDownIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531364/circle-arrow-down_codmdt.svg"
+const circleArrowRightIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531365/circle-arrow-right_cfqf00.svg"
+const circleArrowLeftIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531365/circle-arrow-left_y1brs6.svg"
+const layersIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531601/layers_qzjdlf.svg"
+const cubeIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531374/cube_u9iuxn.svg"
+const clipboardCheckIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531369/clipboard-check_qkff8c.svg"
+const sparkleIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531607/sparkle_mphmfw.svg"
+const magicWandSparkleIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531603/magic-wand-sparkle_x8fswe.svg"
+const crosshairsIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531373/crosshairs_jqzlnt.svg"
+const faceGrinIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531376/face-grin_ai7izx.svg"
+const arrowsBoldOppositeDirectionIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531353/arrows-bold-opposite-direction_xmokf1.svg"
+const moneyBillIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531604/money-bill_gmc79l.svg"
+const codeEditorIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531371/code-editor_xdzsmn.svg"
+const hammerIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531597/hammer_qyau0t.svg"
+const sitemapIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531606/sitemap_ankvfm.svg"
 
 // Aliases for clarity
 const shieldIcon = triangleWarningIcon
@@ -654,38 +655,28 @@ const Documentation = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="
-                glass-card
-                rounded-2xl
-                p-6 sm:p-8
-                bg-gradient-to-br from-blue-500/10 to-purple-500/10
-                backdrop-blur-xl
-                border border-blue-400/20
-                shadow-2xl
-                max-w-full
-                mx-auto
-              "
+              className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                <div className="w-10 h-10 sm:w-8 sm:h-8 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-300 font-bold text-sm">.hl</span>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-8 h-8 bg-black/20 border border-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-slate-200 font-bold text-sm">.hl</span>
                 </div>
-                <h2 className="text-lg sm:text-xl font-medium bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
+                <h2 className="text-xl font-medium text-slate-100">
                   Professional Trading Identity
                 </h2>
               </div>
 
-              <p className="text-slate-300 leading-relaxed mb-6 font-normal text-sm sm:text-base">
+              <p className="text-slate-300 leading-relaxed mb-6 font-normal">
                 Hyperliquid Names (.hl) is a decentralized naming system that maps human-readable names like 
-                <span className="text-blue-300 font-medium"> jeff.hl</span> to wallet addresses. HyperSwipe showcases 
+                <span className="text-slate-200 font-medium"> jeff.hl</span> to wallet addresses. HyperSwipe showcases 
                 your .hl identity prominently in your profile, replacing complex addresses with memorable names for 
                 professional DeFi trading.
               </p>
 
-              <div className="bg-white/5 p-4 sm:p-6 rounded-xl border border-blue-400/20">
+              <div className="bg-white/5 p-6 rounded-xl border border-white/10">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
                   <div>
-                    <div className="text-blue-300 font-medium mb-2 text-sm sm:text-base">Example Transformation</div>
+                    <div className="text-slate-200 font-medium mb-2">Example Transformation</div>
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                       <div className="text-slate-400 font-mono text-xs sm:text-sm break-all">
                         {"0xF26F5551E96aE5162509B25925fFfa7F07B2D652 => testooor.hl"}
@@ -741,28 +732,28 @@ const Documentation = () => {
                 </h2>
                 <ul className="space-y-4">
                   <li className="flex items-start space-x-4">
-                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <span className="w-6 h-6 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white text-sm mt-1">✓</span>
                     <div>
                       <h3 className="text-base font-medium text-white">Human-Readable Identity</h3>
                       <p className="text-slate-300 font-normal">Replace complex wallet addresses with memorable names</p>
                     </div>
                   </li>
                   <li className="flex items-start space-x-4">
-                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <span className="w-6 h-6 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white text-sm mt-1">✓</span>
                     <div>
                       <h3 className="text-base font-medium text-white">Professional Branding</h3>
                       <p className="text-slate-300 font-normal">Build a recognizable identity in the DeFi ecosystem</p>
                     </div>
                   </li>
                   <li className="flex items-start space-x-4">
-                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <span className="w-6 h-6 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white text-sm mt-1">✓</span>
                     <div>
                       <h3 className="text-base font-medium text-white">Decentralized & Secure</h3>
                       <p className="text-slate-300 font-normal">Owned by smart contracts with transparent rules</p>
                     </div>
                   </li>
                   <li className="flex items-start space-x-4">
-                    <span className="w-6 h-6 bg-blue-500/20 border border-blue-400/30 rounded-full flex items-center justify-center text-blue-300 text-sm mt-1">✓</span>
+                    <span className="w-6 h-6 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-white text-sm mt-1">✓</span>
                     <div>
                       <h3 className="text-base font-medium text-white">Reverse Resolution</h3>
                       <p className="text-slate-300 font-normal">Primary names enable address-to-name lookups</p>
@@ -795,10 +786,10 @@ const Documentation = () => {
                     </ul>
                   </div>
                   <div className="bg-black/10 border border-white/5 p-4 rounded-xl">
-                    <h4 className="text-sm font-medium text-blue-300 mb-2">Visual Features</h4>
+                    <h4 className="text-sm font-medium text-slate-200 mb-2">Visual Features</h4>
                     <div className="flex items-center space-x-3">
-                      <div className="px-2 py-1 bg-blue-500/20 border border-blue-400/30 rounded-md">
-                        <span className="text-xs text-blue-300 font-medium">.hl</span>
+                      <div className="px-2 py-1 bg-black/20 border border-white/10 rounded-md">
+                        <span className="text-xs text-slate-200 font-medium">.hl</span>
                       </div>
                       <span className="text-slate-300 font-normal">Distinctive styling and branding</span>
                     </div>
@@ -859,21 +850,21 @@ const Documentation = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-6 bg-black/10 rounded-xl border border-white/5">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-black/20 border border-white/10 rounded-lg flex items-center justify-center">
                     <img src={globeIcon} alt="Global" className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-medium text-slate-200 mb-2">Ecosystem Growth</h3>
                   <p className="text-slate-300 font-normal">Drives adoption by making DeFi more accessible</p>
                 </div>
                 <div className="text-center p-6 bg-black/10 rounded-xl border border-white/5">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-black/20 border border-white/10 rounded-lg flex items-center justify-center">
                     <img src={connectIcon} alt="Connect" className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-medium text-slate-200 mb-2">Network Effects</h3>
                   <p className="text-slate-300 font-normal">Creates viral adoption through social recognition</p>
                 </div>
                 <div className="text-center p-6 bg-black/10 rounded-xl border border-white/5">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-500/20 border border-blue-400/30 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-black/20 border border-white/10 rounded-lg flex items-center justify-center">
                     <img src={sparkleIcon} alt="Sparkle" className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-medium text-slate-200 mb-2">Innovation Catalyst</h3>
@@ -920,7 +911,7 @@ const Documentation = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="glass-card p-8 rounded-2xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 backdrop-blur-xl border border-blue-400/10 shadow-2xl"
+              className="glass-card p-8 rounded-2xl bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl"
             >
               <h2 className="text-xl font-medium text-slate-100 mb-6 flex items-center space-x-3">
                 <img src={rocketIcon} alt="Rocket" className="w-6 h-6" />
@@ -931,8 +922,8 @@ const Documentation = () => {
                 acquire and manage your decentralized identity.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white/5 p-6 rounded-xl border border-blue-400/20">
-                  <h3 className="text-lg font-medium text-blue-300 mb-3">Primary Marketplace</h3>
+                <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+                  <h3 className="text-lg font-medium text-slate-200 mb-3">Primary Marketplace</h3>
                   <p className="text-slate-300 mb-4 font-normal">
                     Visit the official Hyperliquid Names platform to browse available names and make purchases.
                   </p>
@@ -940,8 +931,8 @@ const Documentation = () => {
                     Names are typically available through auctions or direct purchase
                   </div>
                 </div>
-                <div className="bg-white/5 p-6 rounded-xl border border-blue-400/20">
-                  <h3 className="text-lg font-medium text-blue-300 mb-3">Set as Primary</h3>
+                <div className="bg-white/5 p-6 rounded-xl border border-white/10">
+                  <h3 className="text-lg font-medium text-slate-200 mb-3">Set as Primary</h3>
                   <p className="text-slate-300 mb-4 font-normal">
                     After acquiring a name, set it as your primary name to enable reverse resolution across all applications.
                   </p>

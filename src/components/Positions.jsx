@@ -8,13 +8,13 @@ import websocketService from '../services/websocket'
 import keyStore from '../services/keyStore'
 import { getMarketPrice, formatHyperliquidSize } from '../utils/hyperliquidPricing'
 
-// Import Glass Icons
-import clipboardCheckIcon from '../glass_icons/clipboard-check.svg'
-import layersIcon from '../glass_icons/layers.svg'
-import squareChartLineIcon from '../glass_icons/square-chart-line.svg'
-import moneyBillIcon from '../glass_icons/money-bill.svg'
-import gaugeIcon from '../glass_icons/gauge.svg'
-import lockIcon from '../glass_icons/lock.svg'
+// Glass Icons from Cloudinary CDN
+const clipboardCheckIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531369/clipboard-check_qkff8c.svg"
+const layersIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531601/layers_qzjdlf.svg"
+const squareChartLineIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531607/square-chart-line_ohqzni.svg"
+const moneyBillIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531604/money-bill_igvfqd.svg"
+const gaugeIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531537/gauge_xglodz.svg"
+const lockIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531602/lock_yqgjcz.svg"
 
 const Positions = ({ user }) => {
   const { wallets } = useWallets()

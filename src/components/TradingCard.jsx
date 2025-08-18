@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react'
 import { motion } from 'framer-motion'
 import { useWallets, usePrivy } from '@privy-io/react-auth'
 import { hyperliquidAPI, formatAssetData } from '../services/hyperliquid'
 import websocketService from '../services/websocket'
-import Chart from './Chart'
 import { TradingCardSkeleton } from './LoadingSkeleton'
+
+// Lazy load Chart component (contains heavyweight lightweight-charts library)
+const Chart = lazy(() => import('./Chart'))
 import { 
   pythonSigningService,
   constructOrderAction, 
@@ -15,12 +17,12 @@ import { getFormattedOrderPrice } from '../utils/priceUtils'
 import keyStore from '../services/keyStore'
 import { getMarketPrice, calculatePositionSize } from '../utils/hyperliquidPricing'
 
-// Import Glass Icons
-import chartLineIcon from '../glass_icons/chart-line.svg'
-import gaugeIcon from '../glass_icons/gauge.svg'
-import lockIcon from '../glass_icons/lock.svg'
-import trendUpIcon from '../glass_icons/circle-arrow-up.svg'
-import trendDownIcon from '../glass_icons/circle-arrow-down.svg'
+// Glass Icons with Cloudinary CDN
+const chartLineIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531363/chart-line_fnqhmm.svg"
+const gaugeIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531537/gauge_xglodz.svg"
+const lockIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531602/lock_yqgjcz.svg"
+const trendUpIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531366/circle-arrow-up_wxost5.svg"
+const trendDownIcon = "https://res.cloudinary.com/djxuqljgr/image/upload/v1755531364/circle-arrow-down_codmdt.svg"
 
 // Format open interest with appropriate units
 const formatOpenInterest = (openInterest) => {
@@ -607,7 +609,16 @@ const TradingCard = ({ currentAssetIndex, onSwipeLeft, onSwipeRight, onAssetCoun
             borderBottom: 'none'
           }}
         >
-          <Chart asset={currentAsset} className="w-full h-full" />
+          <Suspense fallback={
+            <div className="w-full h-full flex items-center justify-center bg-black/10">
+              <div className="text-center">
+                <div className="w-6 h-6 border-2 border-white/20 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-slate-400 text-xs">Loading chart...</p>
+              </div>
+            </div>
+          }>
+            <Chart asset={currentAsset} className="w-full h-full" />
+          </Suspense>
           {/* Gradient overlay for better integration */}
           <div 
             className="absolute inset-0 pointer-events-none"

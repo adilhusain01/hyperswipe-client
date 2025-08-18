@@ -1,47 +1,42 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import TradingCard from './components/TradingCard'
-import Profile from './components/Profile'
-import Positions from './components/Positions'
-import MarketList from './components/MarketList'
 import CryptoTrailBackground from './components/CryptoTrailBackground'
 import websocketService from './services/websocket'
-import hyperswipeLogo from './assets/logos/hyperswipe-no-bg.png'
+// Logo hosted on Cloudinary CDN for better performance
+const hyperswipeLogo = 'https://res.cloudinary.com/djxuqljgr/image/upload/v1755535763/hyperswipe-no-bg_ztqnzb.png'
 
-// Import Glass Icons
-import squareChartLineIcon from './glass_icons/square-chart-line.svg'
-import layersIcon from './glass_icons/layers.svg'
-import clipboardCheckIcon from './glass_icons/clipboard-check.svg'
-import userIcon from './glass_icons/user.svg'
-import connectIcon from './glass_icons/connect.svg'
-import bookOpenIcon from './glass_icons/book-open.svg'
+// Lazy load components for better performance
+const TradingCard = lazy(() => import('./components/TradingCard'))
+const Profile = lazy(() => import('./components/Profile'))
+const Positions = lazy(() => import('./components/Positions'))
+const MarketList = lazy(() => import('./components/MarketList'))
 
-// Glass Navigation Icons
+// Glass Navigation Icons with Cloudinary CDN
 const TradingIcon = () => (
-  <img src={squareChartLineIcon} alt="Trading" className="w-5 h-5" />
+  <img src="https://res.cloudinary.com/djxuqljgr/image/upload/v1755531607/square-chart-line_ohqzni.svg" alt="Trading" className="w-5 h-5" />
 )
 
 const PositionsIcon = () => (
-  <img src={clipboardCheckIcon} alt="Positions" className="w-5 h-5" />
+  <img src="https://res.cloudinary.com/djxuqljgr/image/upload/v1755531369/clipboard-check_qkff8c.svg" alt="Positions" className="w-5 h-5" />
 )
 
 const MarketsIcon = () => (
-  <img src={layersIcon} alt="Markets" className="w-5 h-5" />
+  <img src="https://res.cloudinary.com/djxuqljgr/image/upload/v1755531601/layers_qzjdlf.svg" alt="Markets" className="w-5 h-5" />
 )
 
 const ProfileIcon = () => (
-  <img src={userIcon} alt="Profile" className="w-5 h-5" />
+  <img src="https://res.cloudinary.com/djxuqljgr/image/upload/v1755531614/user_jcnps2.svg" alt="Profile" className="w-5 h-5" />
 )
 
 const LogoutIcon = () => (
-  <img src={connectIcon} alt="Logout" className="w-5 h-5" />
+  <img src="https://res.cloudinary.com/djxuqljgr/image/upload/v1755531371/connect_afpip6.svg" alt="Logout" className="w-5 h-5" />
 )
 
 // Documentation Component
 const DocumentationIcon = () => (
-  <img src={bookOpenIcon} alt="Documentation" className="w-4 h-4" />
+  <img src="https://res.cloudinary.com/djxuqljgr/image/upload/v1755531355/book-open_o4jjla.svg" alt="Documentation" className="w-4 h-4" />
 )
 
 const Documentation = () => {
@@ -79,14 +74,14 @@ const App = () => {
       setCurrentView(viewParam)
     } else if (viewParam) {
       // Invalid view parameter, redirect to trading
-      navigate('/?view=trading', { replace: true })
+      navigate('/app?view=trading', { replace: true })
     }
   }, [location.search, navigate])
 
   // Handle view changes and update URL
   const handleViewChange = (view) => {
     setCurrentView(view)
-    navigate(`/?view=${view}`, { replace: true })
+    navigate(`/app?view=${view}`, { replace: true })
   }
 
   if (!ready) {
@@ -285,41 +280,54 @@ const App = () => {
 
             {/* Content */}
             <div className="flex-1 h-[685px] bg-black/10">
-            {currentView === 'trading' ? (
-              <TradingCard 
-                currentAssetIndex={currentAssetIndex}
-                onSwipeLeft={() => {
-                  // Swipe left = previous asset (circular)
-                  if (totalAssets > 0) {
-                    setCurrentAssetIndex(prev => 
-                      prev === 0 ? totalAssets - 1 : prev - 1
-                    )
-                  }
-                }}
-                onSwipeRight={() => {
-                  // Swipe right = next asset (circular)
-                  if (totalAssets > 0) {
-                    setCurrentAssetIndex(prev => 
-                      (prev + 1) % totalAssets
-                    )
-                  }
-                }}
-                onAssetCountChange={setTotalAssets}
-                user={user}
-              />
-            ) : currentView === 'positions' ? (
-              <Positions user={user} />
-            ) : currentView === 'markets' ? (
-              <MarketList 
-                user={user} 
-                onSelectAsset={(assetIndex) => {
-                  setCurrentAssetIndex(assetIndex)
-                  handleViewChange('trading')
-                }}
-              />
-            ) : (
-              <Profile user={user} />
-            )}
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-full">
+                  <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="text-center"
+                  >
+                    <div className="w-8 h-8 border-2 border-white/20 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                    <p className="text-slate-300 text-sm font-medium">Loading...</p>
+                  </motion.div>
+                </div>
+              }>
+                {currentView === 'trading' ? (
+                  <TradingCard 
+                    currentAssetIndex={currentAssetIndex}
+                    onSwipeLeft={() => {
+                      // Swipe left = previous asset (circular)
+                      if (totalAssets > 0) {
+                        setCurrentAssetIndex(prev => 
+                          prev === 0 ? totalAssets - 1 : prev - 1
+                        )
+                      }
+                    }}
+                    onSwipeRight={() => {
+                      // Swipe right = next asset (circular)
+                      if (totalAssets > 0) {
+                        setCurrentAssetIndex(prev => 
+                          (prev + 1) % totalAssets
+                        )
+                      }
+                    }}
+                    onAssetCountChange={setTotalAssets}
+                    user={user}
+                  />
+                ) : currentView === 'positions' ? (
+                  <Positions user={user} />
+                ) : currentView === 'markets' ? (
+                  <MarketList 
+                    user={user} 
+                    onSelectAsset={(assetIndex) => {
+                      setCurrentAssetIndex(assetIndex)
+                      handleViewChange('trading')
+                    }}
+                  />
+                ) : (
+                  <Profile user={user} />
+                )}
+              </Suspense>
             </div>
           </motion.div>
 
